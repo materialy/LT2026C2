@@ -68,7 +68,12 @@ pre code{background:none;padding:0;font-size:inherit;overflow-wrap:normal}
 kbd{font-family:var(--mono);font-size:.85em;border:1.5px solid var(--line);border-bottom-width:3px;padding:0 .35em;background:var(--panel)}
 
 .links-top{display:flex;flex-wrap:wrap;gap:.5em;margin:.4em 0 1em}
-.links-top a{border:2px solid var(--ink);background:var(--panel);padding:.3em .8em;text-decoration:none;box-shadow:3px 3px 0 var(--ink)}
+.links-top a,.links-top button{font:inherit;font-weight:600;color:var(--ink);cursor:pointer;border:2px solid var(--ink);background:var(--panel);padding:.3em .8em;text-decoration:none;box-shadow:3px 3px 0 var(--ink)}
+
+.toc{display:flex;flex-wrap:wrap;gap:.35em .5em;margin:0 0 1.2em;font-size:.92rem}
+.toc a{border:1.5px solid var(--line);background:var(--panel);padding:.15em .6em;text-decoration:none;font-weight:600}
+.toc a .no{font-family:var(--mono);color:var(--margin);font-size:.85em;margin-right:.35em}
+h2[id]{scroll-margin-top:1em}
 
 .done{list-style:none;padding:0;display:grid;gap:.6em;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));margin:1.2em 0}
 .done li{border:2px solid var(--ink);background:var(--panel);padding:.8em 1em;max-width:none}
@@ -134,8 +139,21 @@ summary:focus-visible,a:focus-visible,button:focus-visible{outline:3px solid var
   details .ans{padding-left:1.2em}
 }
 @media print{
-  body{background:none}
-  .sheet::before,.theme,.links-top{display:none}
+  /* zawsze jasny motyw na papierze (ciemny dałby jasny tekst na białej kartce) */
+  :root,:root[data-theme],:root:not([data-theme="light"]){
+    --paper:#FFFFFF; --grid:#DCE6F5; --ink:#1D2A5C; --ink-soft:#4A5785;
+    --margin:#D9433B; --marker:#FFE45C; --marker-ink:#1D2A5C; --code-bg:#EEF2FA; --line:#C5D3EA;
+    --ok:#1F8A5B; --bad:#C2372F; --panel:#FFFFFF;
+    --tag:#7A3FC2; --attr:#2563C9; --val:#1F8A5B;
+    color-scheme:light;
+  }
+  body{background:none;font-size:11pt;line-height:1.45;padding:0}
+  .sheet{max-width:none;padding:0}
+  .sheet::before,.theme,.links-top,.toc{display:none}
+  h1{font-size:24pt}
+  h2{font-size:16pt;margin:1.3em 0 .4em}
+  h2,h3{break-after:avoid}
+  pre{font-size:8.5pt}
   pre,.done li,.card,details{box-shadow:none;break-inside:avoid}
   details .ans{display:block}
 }
@@ -154,7 +172,9 @@ summary:focus-visible,a:focus-visible,button:focus-visible{outline:3px solid var
 .filters{display:flex;flex-wrap:wrap;gap:.4em;margin:1em 0 0}
 .filters button{font:inherit;font-weight:600;border:2px solid var(--ink);background:var(--panel);color:var(--ink);padding:.3em .8em;cursor:pointer}
 .filters button[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
-.lesson[hidden]{display:none}
+.lesson[hidden],.topic[hidden]{display:none}
+.revise{margin:1.6em 0 0}
+.revise h2{margin:0 0 .5em}
 </style>
 </head>
 <body>
@@ -164,6 +184,7 @@ summary:focus-visible,a:focus-visible,button:focus-visible{outline:3px solid var
   <h1>LT2026C2</h1>
   <p class="lead">Najnowsze lekcje na górze. Każde zagadnienie ma ściągę, prezentację, quiz i paczkę ZIP do pobrania (po rozpakowaniu działa bez internetu).</p>
   
+<section class="revise"><h2>Powtórka przed sprawdzianem</h2><div class="topics"><article class="topic" data-p="psi"><h4>Projektowanie Stron Internetowych</h4><p class="links-top"><a href="psi/powtorka.html">Powtórka</a></p><p class="meta">losowe pytania z 3 zagadnień · pytań w puli: 31</p></article></div></section>
 <section class="lesson" data-p="psi"><h2><span class="no">śr 7.10.2026</span>Elementy składowe strony www</h2><p class="meta">Projektowanie Stron Internetowych</p><h3>Na lekcji</h3><div class="topics"><article class="topic"><h4>Nagłówki i akapity w HTML</h4><p class="links-top"><a href="psi/02-naglowki-i-akapity/sciaga.html">Ściąga</a><a href="psi/02-naglowki-i-akapity/prezentacja.html">Prezentacja</a><a href="psi/02-naglowki-i-akapity/quiz.html">Quiz</a><a href="psi/02-naglowki-i-akapity.zip" download>ZIP</a></p><p class="meta">w ZIP-ie: pliki startowe do ćwiczeń · poprawiono 28.10</p></article><article class="topic"><h4>Obrazy w HTML</h4><p class="links-top"><a href="psi/03-obrazy-html/sciaga.html">Ściąga</a><a href="psi/03-obrazy-html/prezentacja.html">Prezentacja</a><a href="psi/03-obrazy-html/quiz.html">Quiz</a><a href="psi/03-obrazy-html.zip" download>ZIP</a></p><p class="meta">w ZIP-ie: pliki startowe do ćwiczeń · poprawiono 28.10</p></article></div><h3>Powtórz</h3><div class="topics"><article class="topic"><h4>Struktura dokumentu HTML</h4><p class="links-top"><a href="psi/01-struktura-dokumentu-html/sciaga.html">Ściąga</a><a href="psi/01-struktura-dokumentu-html/prezentacja.html">Prezentacja</a><a href="psi/01-struktura-dokumentu-html/quiz.html">Quiz</a><a href="psi/01-struktura-dokumentu-html.zip" download>ZIP</a></p><p class="meta">w ZIP-ie: pliki startowe do ćwiczeń · poprawiono 28.10</p></article></div></section>
 <section class="lesson" data-p="psi"><h2><span class="no">śr 23.09.2026</span>Struktura dokumentu HTML</h2><p class="meta">Projektowanie Stron Internetowych</p><h3>Na lekcji</h3><div class="topics"><article class="topic"><h4>Struktura dokumentu HTML</h4><p class="links-top"><a href="psi/01-struktura-dokumentu-html/sciaga.html">Ściąga</a><a href="psi/01-struktura-dokumentu-html/prezentacja.html">Prezentacja</a><a href="psi/01-struktura-dokumentu-html/quiz.html">Quiz</a><a href="psi/01-struktura-dokumentu-html.zip" download>ZIP</a></p><p class="meta">w ZIP-ie: pliki startowe do ćwiczeń · poprawiono 28.10</p></article></div></section>
 </main>
@@ -179,7 +200,7 @@ summary:focus-visible,a:focus-visible,button:focus-visible{outline:3px solid var
   var buttons = document.querySelectorAll(".filters button");
   function show(p) {
     buttons.forEach(function (b) { b.setAttribute("aria-pressed", String(b.dataset.p === p)); });
-    document.querySelectorAll(".lesson").forEach(function (s) { s.hidden = !!p && s.dataset.p !== p; });
+    document.querySelectorAll(".lesson, .topic[data-p]").forEach(function (s) { s.hidden = !!p && s.dataset.p !== p; });
     try { localStorage.setItem("materialy-przedmiot", p); } catch (e) {}
   }
   buttons.forEach(function (b) { b.addEventListener("click", function () { show(b.dataset.p); }); });

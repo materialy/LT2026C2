@@ -68,7 +68,12 @@ pre code{background:none;padding:0;font-size:inherit;overflow-wrap:normal}
 kbd{font-family:var(--mono);font-size:.85em;border:1.5px solid var(--line);border-bottom-width:3px;padding:0 .35em;background:var(--panel)}
 
 .links-top{display:flex;flex-wrap:wrap;gap:.5em;margin:.4em 0 1em}
-.links-top a{border:2px solid var(--ink);background:var(--panel);padding:.3em .8em;text-decoration:none;box-shadow:3px 3px 0 var(--ink)}
+.links-top a,.links-top button{font:inherit;font-weight:600;color:var(--ink);cursor:pointer;border:2px solid var(--ink);background:var(--panel);padding:.3em .8em;text-decoration:none;box-shadow:3px 3px 0 var(--ink)}
+
+.toc{display:flex;flex-wrap:wrap;gap:.35em .5em;margin:0 0 1.2em;font-size:.92rem}
+.toc a{border:1.5px solid var(--line);background:var(--panel);padding:.15em .6em;text-decoration:none;font-weight:600}
+.toc a .no{font-family:var(--mono);color:var(--margin);font-size:.85em;margin-right:.35em}
+h2[id]{scroll-margin-top:1em}
 
 .done{list-style:none;padding:0;display:grid;gap:.6em;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));margin:1.2em 0}
 .done li{border:2px solid var(--ink);background:var(--panel);padding:.8em 1em;max-width:none}
@@ -134,8 +139,21 @@ summary:focus-visible,a:focus-visible,button:focus-visible{outline:3px solid var
   details .ans{padding-left:1.2em}
 }
 @media print{
-  body{background:none}
-  .sheet::before,.theme,.links-top{display:none}
+  /* zawsze jasny motyw na papierze (ciemny dałby jasny tekst na białej kartce) */
+  :root,:root[data-theme],:root:not([data-theme="light"]){
+    --paper:#FFFFFF; --grid:#DCE6F5; --ink:#1D2A5C; --ink-soft:#4A5785;
+    --margin:#D9433B; --marker:#FFE45C; --marker-ink:#1D2A5C; --code-bg:#EEF2FA; --line:#C5D3EA;
+    --ok:#1F8A5B; --bad:#C2372F; --panel:#FFFFFF;
+    --tag:#7A3FC2; --attr:#2563C9; --val:#1F8A5B;
+    color-scheme:light;
+  }
+  body{background:none;font-size:11pt;line-height:1.45;padding:0}
+  .sheet{max-width:none;padding:0}
+  .sheet::before,.theme,.links-top,.toc{display:none}
+  h1{font-size:24pt}
+  h2{font-size:16pt;margin:1.3em 0 .4em}
+  h2,h3{break-after:avoid}
+  pre{font-size:8.5pt}
   pre,.done li,.card,details{box-shadow:none;break-inside:avoid}
   details .ans{display:block}
 }
@@ -158,6 +176,13 @@ summary:focus-visible,a:focus-visible,button:focus-visible{outline:3px solid var
 .score button{font:inherit;font-weight:600;border:2px solid var(--ink);background:var(--panel);color:var(--ink);padding:.45em 1em;cursor:pointer;box-shadow:3px 3px 0 var(--ink)}
 .score button.primary{background:var(--ink);color:var(--paper)}
 .score button[hidden]{display:none}
+.q .temat{margin:0 0 .3em;font-size:.85rem}
+.los[hidden]{display:none}
+.los .tematy{display:grid;gap:.2em;margin:.2em 0 .8em}
+.los label{display:flex;gap:.55em;align-items:baseline;cursor:pointer}
+.los input{accent-color:var(--margin);width:1.1em;height:1.1em;flex:none}
+.los select,.los button{font:inherit;font-weight:600;border:2px solid var(--ink);background:var(--panel);color:var(--ink);padding:.3em .6em}
+.los button{background:var(--ink);color:var(--paper);padding:.45em 1em;cursor:pointer;box-shadow:3px 3px 0 var(--margin);margin-top:.4em}
 </style>
 </head>
 <body>
@@ -167,6 +192,12 @@ summary:focus-visible,a:focus-visible,button:focus-visible{outline:3px solid var
   <h1>Struktura dokumentu HTML</h1>
   <p class="links-top"><a href="sciaga.html">Ściąga</a><a href="prezentacja.html">Prezentacja</a></p>
   <p class="lead">Kliknij odpowiedź, a od razu zobaczysz, czy jest dobra, i dlaczego. Na końcu możesz poprawić tylko pytania z błędem.</p>
+  <div class="card los" id="los" hidden>
+    <h3>Z których zagadnień?</h3>
+    <div class="tematy"></div>
+    <label>Liczba pytań: <select id="ile"></select></label>
+    <button type="button" id="losuj">Losuj nowy zestaw</button>
+  </div>
   <div id="quiz"></div>
   <div class="score" aria-live="polite"><span id="wynik"></span>
     <span class="btns"><button type="button" class="primary" id="popraw" hidden>Popraw błędne</button><button type="button" id="reset">Od nowa</button></span>
@@ -174,13 +205,14 @@ summary:focus-visible,a:focus-visible,button:focus-visible{outline:3px solid var
 </main>
 <script>
 (function () {
-  const DANE = [{"pytanie": "Co oznacza pierwsza linia dokumentu: <!DOCTYPE html>?", "odpowiedzi": ["To dokument w wersji HTML5", "To komentarz dla programisty", "To tytuł strony", "To początek treści widocznej"], "poprawna": 0, "wyjasnienie": "Deklaracja DOCTYPE mówi przeglądarce, że plik jest napisany w HTML5. Stoi zawsze w pierwszej linii."}, {"pytanie": "W której części dokumentu umieszczasz treść widoczną w oknie przeglądarki?", "odpowiedzi": ["<head>", "<title>", "<body>", "<meta>"], "poprawna": 2, "wyjasnienie": "Wszystko, co widzi użytkownik (nagłówki, tekst, obrazy), wpisujemy w <body>."}, {"pytanie": "Gdzie pojawi się tekst wpisany w znacznik <title>?", "odpowiedzi": ["Na środku strony", "Na karcie przeglądarki", "W stopce strony", "Nigdzie, to komentarz"], "poprawna": 1, "wyjasnienie": "Tytuł widać na karcie, w zakładkach i w wynikach wyszukiwania, ale nie w oknie strony."}, {"pytanie": "Do czego służy <meta charset=\"UTF-8\">?", "odpowiedzi": ["Ustawia język strony na polski", "Dopasowuje stronę do telefonu", "Dodaje tytuł na karcie", "Pozwala poprawnie wyświetlić polskie litery"], "poprawna": 3, "wyjasnienie": "charset to kodowanie znaków. UTF-8 obsługuje ą, ę, ś i inne znaki spoza alfabetu łacińskiego."}, {"pytanie": "Który zapis ustawia polski język treści strony?", "odpowiedzi": ["<html lang=\"en\">", "<html lang=\"pl\">", "<html charset=\"pl\">", "<html language=\"polski\">"], "poprawna": 1, "wyjasnienie": "Język podaje atrybut lang z kodem języka; pl to polski. Szablon z VS Code wstawia en, więc trzeba to zmienić."}, {"pytanie": "Który z tych znaczników jest pusty, czyli nie ma znacznika zamykającego?", "odpowiedzi": ["<title>", "<head>", "<body>", "<meta>"], "poprawna": 3, "wyjasnienie": "<meta> nie ma treści ani zamknięcia. Pozostałe obejmują treść i mają znacznik zamykający."}, {"pytanie": "Otwarto kolejno <html>, <body>, <p>. Który znacznik zamykasz jako pierwszy?", "odpowiedzi": ["<\/p>", "<\/html>", "<\/body>", "Dowolny z nich"], "poprawna": 0, "wyjasnienie": "Zamykamy w odwrotnej kolejności: ostatnio otwarty <p> zamyka się pierwszy."}, {"pytanie": "Co robi <meta name=\"viewport\" content=\"width=device-width, …\">?", "odpowiedzi": ["Ustawia kodowanie znaków", "Dopasowuje stronę do szerokości ekranu", "Dodaje ikonę na karcie", "Blokuje kopiowanie tekstu"], "poprawna": 1, "wyjasnienie": "viewport mówi przeglądarce w telefonie, że strona ma mieć szerokość ekranu urządzenia."}, {"pytanie": "Jaki skrót Emmet w VS Code wstawia szkielet dokumentu HTML?", "odpowiedzi": ["Ctrl + S", "# + Tab", "! + Tab", "html + Enter"], "poprawna": 2, "wyjasnienie": "W pustym pliku .html wpisz ! i naciśnij Tab. Potem popraw lang i title."}, {"pytanie": "Jak nazywamy zapis lang=\"pl\" wewnątrz znacznika <html>?", "odpowiedzi": ["Atrybut", "Element", "Znacznik zamykający", "Komentarz"], "poprawna": 0, "wyjasnienie": "Atrybut to dodatkowa informacja w znaczniku otwierającym, w postaci nazwa=\"wartość\"."}];
+  const WSZYSTKIE = [{"pytanie": "Co oznacza pierwsza linia dokumentu: <!DOCTYPE html>?", "odpowiedzi": ["To dokument w wersji HTML5", "To komentarz dla programisty", "To tytuł strony", "To początek treści widocznej"], "poprawna": 0, "wyjasnienie": "Deklaracja DOCTYPE mówi przeglądarce, że plik jest napisany w HTML5. Stoi zawsze w pierwszej linii."}, {"pytanie": "W której części dokumentu umieszczasz treść widoczną w oknie przeglądarki?", "odpowiedzi": ["<head>", "<title>", "<body>", "<meta>"], "poprawna": 2, "wyjasnienie": "Wszystko, co widzi użytkownik (nagłówki, tekst, obrazy), wpisujemy w <body>."}, {"pytanie": "Gdzie pojawi się tekst wpisany w znacznik <title>?", "odpowiedzi": ["Na środku strony", "Na karcie przeglądarki", "W stopce strony", "Nigdzie, to komentarz"], "poprawna": 1, "wyjasnienie": "Tytuł widać na karcie, w zakładkach i w wynikach wyszukiwania, ale nie w oknie strony."}, {"pytanie": "Do czego służy <meta charset=\"UTF-8\">?", "odpowiedzi": ["Ustawia język strony na polski", "Dopasowuje stronę do telefonu", "Dodaje tytuł na karcie", "Pozwala poprawnie wyświetlić polskie litery"], "poprawna": 3, "wyjasnienie": "charset to kodowanie znaków. UTF-8 obsługuje ą, ę, ś i inne znaki spoza alfabetu łacińskiego."}, {"pytanie": "Który zapis ustawia polski język treści strony?", "odpowiedzi": ["<html lang=\"en\">", "<html lang=\"pl\">", "<html charset=\"pl\">", "<html language=\"polski\">"], "poprawna": 1, "wyjasnienie": "Język podaje atrybut lang z kodem języka; pl to polski. Szablon z VS Code wstawia en, więc trzeba to zmienić."}, {"pytanie": "Który z tych znaczników jest pusty, czyli nie ma znacznika zamykającego?", "odpowiedzi": ["<title>", "<head>", "<body>", "<meta>"], "poprawna": 3, "wyjasnienie": "<meta> nie ma treści ani zamknięcia. Pozostałe obejmują treść i mają znacznik zamykający."}, {"pytanie": "Otwarto kolejno <html>, <body>, <p>. Który znacznik zamykasz jako pierwszy?", "odpowiedzi": ["<\/p>", "<\/html>", "<\/body>", "Dowolny z nich"], "poprawna": 0, "wyjasnienie": "Zamykamy w odwrotnej kolejności: ostatnio otwarty <p> zamyka się pierwszy."}, {"pytanie": "Co robi <meta name=\"viewport\" content=\"width=device-width, …\">?", "odpowiedzi": ["Ustawia kodowanie znaków", "Dopasowuje stronę do szerokości ekranu", "Dodaje ikonę na karcie", "Blokuje kopiowanie tekstu"], "poprawna": 1, "wyjasnienie": "viewport mówi przeglądarce w telefonie, że strona ma mieć szerokość ekranu urządzenia."}, {"pytanie": "Jaki skrót Emmet w VS Code wstawia szkielet dokumentu HTML?", "odpowiedzi": ["Ctrl + S", "# + Tab", "! + Tab", "html + Enter"], "poprawna": 2, "wyjasnienie": "W pustym pliku .html wpisz ! i naciśnij Tab. Potem popraw lang i title."}, {"pytanie": "Jak nazywamy zapis lang=\"pl\" wewnątrz znacznika <html>?", "odpowiedzi": ["Atrybut", "Element", "Znacznik zamykający", "Komentarz"], "poprawna": 0, "wyjasnienie": "Atrybut to dodatkowa informacja w znaczniku otwierającym, w postaci nazwa=\"wartość\"."}], LOS = null;
+  let DANE = WSZYSTKIE, stan = [];   // stan: null = bez odpowiedzi, true = dobrze, false = źle
   const box = document.getElementById("quiz"), wynik = document.getElementById("wynik"), popraw = document.getElementById("popraw");
   const root = document.documentElement;
-  const stan = DANE.map(() => null);   // null = bez odpowiedzi, true = dobrze, false = źle
   const esc = s => String(s).replace(/[&<>"]/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;"}[c]));
   const fmt = s => esc(s).replace(/`([^`]+)`/g, "<code>$1</code>");
   function show() {
+    if (!DANE.length) { wynik.textContent = "Zaznacz co najmniej jedno zagadnienie."; popraw.hidden = true; return; }
     const done = stan.filter(x => x !== null).length, good = stan.filter(x => x === true).length, bad = stan.filter(x => x === false).length;
     wynik.textContent = done < DANE.length ? "Odpowiedziano: " + done + " z " + DANE.length + " · dobrze: " + good
       : "Wynik: " + good + " / " + DANE.length + (good === DANE.length ? " — komplet!" : "");
@@ -190,7 +222,7 @@ summary:focus-visible,a:focus-visible,button:focus-visible{outline:3px solid var
   function question(i) {
     const q = DANE[i], el = document.createElement("section");
     el.className = "q";
-    el.innerHTML = "<h2><span class=\"no\">" + String(i + 1).padStart(2, "0") + "</span>" + fmt(q.pytanie) + "</h2><div class=\"opts\"></div>"
+    el.innerHTML = (q.temat ? "<p class=\"meta temat\">" + esc(q.temat) + "</p>" : "") + "<h2><span class=\"no\">" + String(i + 1).padStart(2, "0") + "</span>" + fmt(q.pytanie) + "</h2><div class=\"opts\"></div>"
       + "<p class=\"why\">" + fmt(q.wyjasnienie || "") + "</p>";
     const opts = el.querySelector(".opts");
     q.odpowiedzi.forEach((a, j) => {
@@ -228,7 +260,33 @@ summary:focus-visible,a:focus-visible,button:focus-visible{outline:3px solid var
     root.dataset.theme = dark ? "light" : "dark";
     try { localStorage.setItem("cppkurs-theme", root.dataset.theme); } catch (e) {}
   });
-  render(false);
+  function start(lista) { DANE = lista; stan = DANE.map(() => null); box.innerHTML = ""; render(false); }
+  if (LOS) {
+    // powtórka: losowy zestaw pytań z zaznaczonych zagadnień
+    const panel = document.getElementById("los"), lista = panel.querySelector(".tematy"), ile = document.getElementById("ile");
+    [...new Set(WSZYSTKIE.map(q => q.temat))].forEach(t => {
+      const l = document.createElement("label");
+      l.innerHTML = "<input type=\"checkbox\" checked><span>" + esc(t) + " <span class=\"meta\">(" + WSZYSTKIE.filter(q => q.temat === t).length + ")</span></span>";
+      l.querySelector("input").value = t;
+      lista.appendChild(l);
+    });
+    LOS.liczby.filter(n => n < WSZYSTKIE.length).concat([0]).forEach(n => {
+      const o = document.createElement("option");
+      o.value = n;
+      o.textContent = n ? n : "wszystkie (" + WSZYSTKIE.length + ")";
+      ile.appendChild(o);
+    });
+    ile.value = WSZYSTKIE.length > LOS.domyslnie ? LOS.domyslnie : 0;
+    const losuj = () => {
+      const wybrane = new Set([...lista.querySelectorAll("input:checked")].map(x => x.value));
+      const pula = WSZYSTKIE.filter(q => wybrane.has(q.temat));
+      for (let i = pula.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [pula[i], pula[j]] = [pula[j], pula[i]]; }
+      start(pula.slice(0, Number(ile.value) || pula.length));
+    };
+    document.getElementById("losuj").addEventListener("click", losuj);
+    panel.hidden = false;
+    losuj();
+  } else start(WSZYSTKIE);
 })();
 </script>
 </body>

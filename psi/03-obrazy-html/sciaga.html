@@ -68,7 +68,12 @@ pre code{background:none;padding:0;font-size:inherit;overflow-wrap:normal}
 kbd{font-family:var(--mono);font-size:.85em;border:1.5px solid var(--line);border-bottom-width:3px;padding:0 .35em;background:var(--panel)}
 
 .links-top{display:flex;flex-wrap:wrap;gap:.5em;margin:.4em 0 1em}
-.links-top a{border:2px solid var(--ink);background:var(--panel);padding:.3em .8em;text-decoration:none;box-shadow:3px 3px 0 var(--ink)}
+.links-top a,.links-top button{font:inherit;font-weight:600;color:var(--ink);cursor:pointer;border:2px solid var(--ink);background:var(--panel);padding:.3em .8em;text-decoration:none;box-shadow:3px 3px 0 var(--ink)}
+
+.toc{display:flex;flex-wrap:wrap;gap:.35em .5em;margin:0 0 1.2em;font-size:.92rem}
+.toc a{border:1.5px solid var(--line);background:var(--panel);padding:.15em .6em;text-decoration:none;font-weight:600}
+.toc a .no{font-family:var(--mono);color:var(--margin);font-size:.85em;margin-right:.35em}
+h2[id]{scroll-margin-top:1em}
 
 .done{list-style:none;padding:0;display:grid;gap:.6em;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));margin:1.2em 0}
 .done li{border:2px solid var(--ink);background:var(--panel);padding:.8em 1em;max-width:none}
@@ -134,8 +139,21 @@ summary:focus-visible,a:focus-visible,button:focus-visible{outline:3px solid var
   details .ans{padding-left:1.2em}
 }
 @media print{
-  body{background:none}
-  .sheet::before,.theme,.links-top{display:none}
+  /* zawsze jasny motyw na papierze (ciemny dałby jasny tekst na białej kartce) */
+  :root,:root[data-theme],:root:not([data-theme="light"]){
+    --paper:#FFFFFF; --grid:#DCE6F5; --ink:#1D2A5C; --ink-soft:#4A5785;
+    --margin:#D9433B; --marker:#FFE45C; --marker-ink:#1D2A5C; --code-bg:#EEF2FA; --line:#C5D3EA;
+    --ok:#1F8A5B; --bad:#C2372F; --panel:#FFFFFF;
+    --tag:#7A3FC2; --attr:#2563C9; --val:#1F8A5B;
+    color-scheme:light;
+  }
+  body{background:none;font-size:11pt;line-height:1.45;padding:0}
+  .sheet{max-width:none;padding:0}
+  .sheet::before,.theme,.links-top,.toc{display:none}
+  h1{font-size:24pt}
+  h2{font-size:16pt;margin:1.3em 0 .4em}
+  h2,h3{break-after:avoid}
+  pre{font-size:8.5pt}
   pre,.done li,.card,details{box-shadow:none;break-inside:avoid}
   details .ans{display:block}
 }
@@ -147,11 +165,12 @@ summary:focus-visible,a:focus-visible,button:focus-visible{outline:3px solid var
 <main class="sheet">
   <p class="eyebrow">Projektowanie Stron Internetowych · ściąga</p>
   <h1>Obrazy w HTML</h1>
-  <p class="links-top"><a href="prezentacja.html">Prezentacja</a><a href="quiz.html">Quiz</a></p>
+  <p class="links-top"><a href="prezentacja.html">Prezentacja</a><a href="quiz.html">Quiz</a><button type="button" id="drukuj">Drukuj / PDF</button></p>
+<nav class="toc" aria-label="Spis sekcji"><a href="#s01"><span class="no">01</span>Znacznik img</a><a href="#s02"><span class="no">02</span>Ścieżki do plików</a><a href="#s03"><span class="no">03</span>Formaty obrazów</a><a href="#s04"><span class="no">04</span>Typowe błędy</a><a href="#s05"><span class="no">05</span>Słowniczek</a><a href="#s06"><span class="no">06</span>Sprawdź się</a><a href="#s07"><span class="no">07</span>Spróbuj sam</a></nav>
 <div class="card"><h3>Zanim zaczniesz</h3><ul class="check"><li>Atrybut wpisujemy w znaczniku otwierającym jako nazwa=&quot;wartość&quot;.</li><li>Znacznik pusty (np. meta) nie ma znacznika zamykającego.</li><li>Treść widoczną na stronie wpisujemy w części body.</li><li>Strona to plik .html zapisany w jakimś folderze na dysku.</li><li>Nagłówki h1–h6 porządkują stronę, a akapit to p — przydadzą się w ćwiczeniu z całą stroną.</li></ul></div>
 <p class="lead">Obraz wstawiamy znacznikiem <code>&lt;img&gt;</code>. Trzeba podać dobrą ścieżkę do pliku w <code>src</code> i opis obrazu w <code>alt</code>.</p>
 
-<h2><span class="no">01</span>Znacznik img</h2>
+<h2 id="s01"><span class="no">01</span>Znacznik img</h2>
 <pre><code><span class="t">&lt;!DOCTYPE html&gt;</span>
 <span class="t">&lt;html</span> <span class="a">lang</span>=<span class="v">"pl"</span><span class="t">&gt;</span>
 <span class="t">&lt;head&gt;</span>
@@ -178,7 +197,7 @@ summary:focus-visible,a:focus-visible,button:focus-visible{outline:3px solid var
 </table></div>
 <p><code>&lt;img&gt;</code> to znacznik pusty: nie piszemy <code>&lt;/img&gt;</code>. Gdy podasz tylko <code>width</code>, wysokość dopasuje się proporcjonalnie. <mark>Tekst z <code>alt</code> czyta czytnik ekranu, a przeglądarka pokazuje go, gdy obraz się nie wczyta.</mark></p>
 
-<h2><span class="no">02</span>Ścieżki do plików</h2>
+<h2 id="s02"><span class="no">02</span>Ścieżki do plików</h2>
 <pre><code>projekt/
 ├── index.html
 ├── filemon.jpg
@@ -201,7 +220,7 @@ summary:focus-visible,a:focus-visible,button:focus-visible{outline:3px solid var
 </div>
 <p>Nazwy plików: małe litery, bez spacji i polskich znaków, w ścieżce ukośnik <code>/</code>. Na serwerze <code>Kot.jpg</code> i <code>kot.jpg</code> to dwa różne pliki.</p>
 
-<h2><span class="no">03</span>Formaty obrazów</h2>
+<h2 id="s03"><span class="no">03</span>Formaty obrazów</h2>
 <div class="tbl-wrap"><table>
   <thead><tr><th>Format</th><th>Do czego</th></tr></thead>
   <tbody>
@@ -213,7 +232,7 @@ summary:focus-visible,a:focus-visible,button:focus-visible{outline:3px solid var
   </tbody>
 </table></div>
 
-<h2><span class="no">04</span>Typowe błędy</h2>
+<h2 id="s04"><span class="no">04</span>Typowe błędy</h2>
 <ul class="check bad-list">
   <li><code>scr="kot.jpg"</code> zamiast <code>src</code>: literówka, obraz się nie pokaże.</li>
   <li><code>obrazy\kot.jpg</code>: odwrotny ukośnik z Windows; w HTML piszemy <code>/</code>.</li>
@@ -223,7 +242,7 @@ summary:focus-visible,a:focus-visible,button:focus-visible{outline:3px solid var
   <li><code>&lt;/img&gt;</code>: img nie ma znacznika zamykającego.</li>
 </ul>
 
-<h2><span class="no">05</span>Słowniczek</h2>
+<h2 id="s05"><span class="no">05</span>Słowniczek</h2>
 <dl class="gloss">
   <dt>img</dt><dd>znacznik wstawiający obraz (od ang. image); jest pusty</dd>
   <dt>src</dt><dd>atrybut ze ścieżką do pliku obrazu</dd>
@@ -238,7 +257,7 @@ summary:focus-visible,a:focus-visible,button:focus-visible{outline:3px solid var
   <dt>rozszerzenie pliku</dt><dd>końcówka nazwy po kropce, np. <code>.jpg</code>; mówi, jaki to typ pliku</dd>
 </dl>
 
-<h2><span class="no">06</span>Sprawdź się</h2>
+<h2 id="s06"><span class="no">06</span>Sprawdź się</h2>
 <p>Odpowiedz w myślach, potem rozwiń.</p>
 <details><summary>Jakie dwa atrybuty <code>&lt;img&gt;</code> są obowiązkowe?</summary><div class="ans"><p><code>src</code> (skąd wziąć plik) i <code>alt</code> (opis obrazu).</p></div></details>
 <details><summary>Co oznaczają dwie kropki <code>..</code> w ścieżce?</summary><div class="ans"><p>Folder nadrzędny, czyli „wyjdź piętro wyżej”.</p></div></details>
@@ -248,7 +267,7 @@ summary:focus-visible,a:focus-visible,button:focus-visible{outline:3px solid var
 <details><summary><span class="lvl">trudniejsze</span> Znajdź błąd: <code>&lt;img scr="kot.jpg" alt="Kot"&gt;</code></summary><div class="ans"><p><code>scr</code> zamiast <code>src</code>. Przeglądarka nie zna atrybutu <code>scr</code>, więc nie wie, skąd wziąć obraz.</p></div></details>
 <details><summary><span class="lvl">trudniejsze</span> Strona <code>galeria/zdjecia.html</code> ma <code>src="filemon.jpg"</code>, a plik leży w <code>projekt/</code>. Dlaczego obrazu nie widać?</summary><div class="ans"><p>Przeglądarka szuka pliku w folderze <code>galeria/</code>. Trzeba wyjść wyżej: <code>src="../filemon.jpg"</code>.</p></div></details>
 
-<h2><span class="no">07</span>Spróbuj sam</h2>
+<h2 id="s07"><span class="no">07</span>Spróbuj sam</h2>
 <ol class="steps">
   <li>Utwórz folder <code>moja-galeria</code>, a w nim podfoldery <code>obrazy</code> i <code>podstrony</code>. Do <code>obrazy</code> zapisz dowolny obraz jako <code>kot.jpg</code>. Pobierz pliki startowe <a href="pliki/index.html" download>index.html</a> (do <code>moja-galeria</code>) i <a href="pliki/o-mnie.html" download>o-mnie.html</a> (do <code>podstrony</code>).
     <details class="hint"><summary>Podpowiedź</summary><div class="ans"><p>Obraz możesz narysować w Paincie i zapisać jako JPG. Nazwa małymi literami: <code>kot.jpg</code>.</p></div></details>
@@ -277,6 +296,7 @@ summary:focus-visible,a:focus-visible,button:focus-visible{outline:3px solid var
     root.dataset.theme = dark ? "light" : "dark";
     try { localStorage.setItem("cppkurs-theme", root.dataset.theme); } catch (e) {}
   });
+  document.getElementById("drukuj").addEventListener("click", function () { window.print(); });
   window.addEventListener("beforeprint", function () {
     document.querySelectorAll("details").forEach(function (d) { d.open = true; });
   });

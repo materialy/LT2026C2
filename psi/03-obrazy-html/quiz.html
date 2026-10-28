@@ -68,7 +68,12 @@ pre code{background:none;padding:0;font-size:inherit;overflow-wrap:normal}
 kbd{font-family:var(--mono);font-size:.85em;border:1.5px solid var(--line);border-bottom-width:3px;padding:0 .35em;background:var(--panel)}
 
 .links-top{display:flex;flex-wrap:wrap;gap:.5em;margin:.4em 0 1em}
-.links-top a{border:2px solid var(--ink);background:var(--panel);padding:.3em .8em;text-decoration:none;box-shadow:3px 3px 0 var(--ink)}
+.links-top a,.links-top button{font:inherit;font-weight:600;color:var(--ink);cursor:pointer;border:2px solid var(--ink);background:var(--panel);padding:.3em .8em;text-decoration:none;box-shadow:3px 3px 0 var(--ink)}
+
+.toc{display:flex;flex-wrap:wrap;gap:.35em .5em;margin:0 0 1.2em;font-size:.92rem}
+.toc a{border:1.5px solid var(--line);background:var(--panel);padding:.15em .6em;text-decoration:none;font-weight:600}
+.toc a .no{font-family:var(--mono);color:var(--margin);font-size:.85em;margin-right:.35em}
+h2[id]{scroll-margin-top:1em}
 
 .done{list-style:none;padding:0;display:grid;gap:.6em;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));margin:1.2em 0}
 .done li{border:2px solid var(--ink);background:var(--panel);padding:.8em 1em;max-width:none}
@@ -134,8 +139,21 @@ summary:focus-visible,a:focus-visible,button:focus-visible{outline:3px solid var
   details .ans{padding-left:1.2em}
 }
 @media print{
-  body{background:none}
-  .sheet::before,.theme,.links-top{display:none}
+  /* zawsze jasny motyw na papierze (ciemny dałby jasny tekst na białej kartce) */
+  :root,:root[data-theme],:root:not([data-theme="light"]){
+    --paper:#FFFFFF; --grid:#DCE6F5; --ink:#1D2A5C; --ink-soft:#4A5785;
+    --margin:#D9433B; --marker:#FFE45C; --marker-ink:#1D2A5C; --code-bg:#EEF2FA; --line:#C5D3EA;
+    --ok:#1F8A5B; --bad:#C2372F; --panel:#FFFFFF;
+    --tag:#7A3FC2; --attr:#2563C9; --val:#1F8A5B;
+    color-scheme:light;
+  }
+  body{background:none;font-size:11pt;line-height:1.45;padding:0}
+  .sheet{max-width:none;padding:0}
+  .sheet::before,.theme,.links-top,.toc{display:none}
+  h1{font-size:24pt}
+  h2{font-size:16pt;margin:1.3em 0 .4em}
+  h2,h3{break-after:avoid}
+  pre{font-size:8.5pt}
   pre,.done li,.card,details{box-shadow:none;break-inside:avoid}
   details .ans{display:block}
 }
@@ -158,6 +176,13 @@ summary:focus-visible,a:focus-visible,button:focus-visible{outline:3px solid var
 .score button{font:inherit;font-weight:600;border:2px solid var(--ink);background:var(--panel);color:var(--ink);padding:.45em 1em;cursor:pointer;box-shadow:3px 3px 0 var(--ink)}
 .score button.primary{background:var(--ink);color:var(--paper)}
 .score button[hidden]{display:none}
+.q .temat{margin:0 0 .3em;font-size:.85rem}
+.los[hidden]{display:none}
+.los .tematy{display:grid;gap:.2em;margin:.2em 0 .8em}
+.los label{display:flex;gap:.55em;align-items:baseline;cursor:pointer}
+.los input{accent-color:var(--margin);width:1.1em;height:1.1em;flex:none}
+.los select,.los button{font:inherit;font-weight:600;border:2px solid var(--ink);background:var(--panel);color:var(--ink);padding:.3em .6em}
+.los button{background:var(--ink);color:var(--paper);padding:.45em 1em;cursor:pointer;box-shadow:3px 3px 0 var(--margin);margin-top:.4em}
 </style>
 </head>
 <body>
@@ -167,6 +192,12 @@ summary:focus-visible,a:focus-visible,button:focus-visible{outline:3px solid var
   <h1>Obrazy w HTML</h1>
   <p class="links-top"><a href="sciaga.html">Ściąga</a><a href="prezentacja.html">Prezentacja</a></p>
   <p class="lead">Kliknij odpowiedź, a od razu zobaczysz, czy jest dobra, i dlaczego. Na końcu możesz poprawić tylko pytania z błędem.</p>
+  <div class="card los" id="los" hidden>
+    <h3>Z których zagadnień?</h3>
+    <div class="tematy"></div>
+    <label>Liczba pytań: <select id="ile"></select></label>
+    <button type="button" id="losuj">Losuj nowy zestaw</button>
+  </div>
   <div id="quiz"></div>
   <div class="score" aria-live="polite"><span id="wynik"></span>
     <span class="btns"><button type="button" class="primary" id="popraw" hidden>Popraw błędne</button><button type="button" id="reset">Od nowa</button></span>
@@ -174,13 +205,14 @@ summary:focus-visible,a:focus-visible,button:focus-visible{outline:3px solid var
 </main>
 <script>
 (function () {
-  const DANE = [{"pytanie": "Który znacznik wstawia obraz na stronę?", "odpowiedzi": ["<image>", "<img>", "<pic>", "<src>"], "poprawna": 1, "wyjasnienie": "Obraz wstawia znacznik <img> (od ang. image). Jest pusty, więc nie ma znacznika zamykającego."}, {"pytanie": "W którym atrybucie podajesz ścieżkę do pliku obrazu?", "odpowiedzi": ["alt", "href", "src", "title"], "poprawna": 2, "wyjasnienie": "src (source, czyli źródło) wskazuje plik. alt to opis obrazu."}, {"pytanie": "Do czego służy atrybut alt?", "odpowiedzi": ["Tekst zastępczy: opis obrazu", "Ustawia wyrównanie obrazu", "Podaje autora zdjęcia", "Zmienia kolor obrazu"], "poprawna": 0, "wyjasnienie": "alt czyta czytnik ekranu, a przeglądarka pokazuje go, gdy obrazu nie da się wczytać."}, {"pytanie": "Strona i plik kot.jpg leżą w tym samym folderze. Jaką ścieżkę wpiszesz w src?", "odpowiedzi": ["../kot.jpg", "/obrazy/kot.jpg", "C:/kot.jpg", "kot.jpg"], "poprawna": 3, "wyjasnienie": "Gdy plik jest w tym samym folderze co strona, wystarczy sama nazwa pliku."}, {"pytanie": "Strona leży w galeria/, a obraz w obrazy/ (obok). Jak dojść do obrazy/pies.png?", "odpowiedzi": ["obrazy/pies.png", "../obrazy/pies.png", "galeria/obrazy/pies.png", "./pies.png"], "poprawna": 1, "wyjasnienie": "Najpierw ../ (wyjście z galeria), potem obrazy/pies.png."}, {"pytanie": "Która z tych ścieżek jest bezwzględna?", "odpowiedzi": ["obrazy/kot.jpg", "../kot.jpg", "https://example.com/kot.jpg", "kot.jpg"], "poprawna": 2, "wyjasnienie": "Pełny adres z https:// jest bezwzględny. Pozostałe są liczone od folderu strony, więc są względne."}, {"pytanie": "Dlaczego src=\"C:\\Users\\uczen\\Pulpit\\kot.jpg\" to zły pomysł?", "odpowiedzi": ["Ścieżka jest za krótka", "Przeglądarka nie czyta plików jpg", "To poprawna ścieżka względna", "Obraz będzie widać tylko na Twoim komputerze"], "poprawna": 3, "wyjasnienie": "To ścieżka z Twojego dysku. Na serwerze i u innych osób takiego pliku nie ma."}, {"pytanie": "Który znacznik jest zapisany poprawnie?", "odpowiedzi": ["<img scr=\"kot.jpg\" alt=\"Kot\">", "<img src=\"kot.jpg\" alt=\"Kot\">", "<img src=\"kot.jpg\" alt=\"Kot\"><\/img>", "<img src=\"obrazy\\kot.jpg\" alt=\"Kot\">"], "poprawna": 1, "wyjasnienie": "Atrybut to src (nie scr), img nie ma <\/img>, a w ścieżkach piszemy / zamiast \\."}, {"pytanie": "Obraz ma 800 × 600 px. W kodzie jest tylko width=\"200\". Jaka będzie wysokość?", "odpowiedzi": ["600 px", "200 px", "150 px", "800 px"], "poprawna": 2, "wyjasnienie": "Szerokość zmalała 4 razy, więc wysokość też: 600 : 4 = 150 px. Proporcje zostają zachowane."}, {"pytanie": "Co zwykle zobaczysz, gdy pliku obrazu nie ma pod podaną ścieżką?", "odpowiedzi": ["Tekst z alt, często z ikonką zepsutego obrazu", "Pustą białą stronę", "Komunikat o błędzie serwera", "Poprzednio wczytany obraz"], "poprawna": 0, "wyjasnienie": "Przeglądarka pokazuje w miejscu obrazu tekst zastępczy z alt. Reszta strony działa normalnie."}, {"pytanie": "Który format to grafika wektorowa, ostra w każdym rozmiarze (np. logo)?", "odpowiedzi": ["jpg", "png", "gif", "svg"], "poprawna": 3, "wyjasnienie": "SVG opisuje kształty, a nie piksele, więc można go powiększać bez utraty jakości."}];
+  const WSZYSTKIE = [{"pytanie": "Który znacznik wstawia obraz na stronę?", "odpowiedzi": ["<image>", "<img>", "<pic>", "<src>"], "poprawna": 1, "wyjasnienie": "Obraz wstawia znacznik <img> (od ang. image). Jest pusty, więc nie ma znacznika zamykającego."}, {"pytanie": "W którym atrybucie podajesz ścieżkę do pliku obrazu?", "odpowiedzi": ["alt", "href", "src", "title"], "poprawna": 2, "wyjasnienie": "src (source, czyli źródło) wskazuje plik. alt to opis obrazu."}, {"pytanie": "Do czego służy atrybut alt?", "odpowiedzi": ["Tekst zastępczy: opis obrazu", "Ustawia wyrównanie obrazu", "Podaje autora zdjęcia", "Zmienia kolor obrazu"], "poprawna": 0, "wyjasnienie": "alt czyta czytnik ekranu, a przeglądarka pokazuje go, gdy obrazu nie da się wczytać."}, {"pytanie": "Strona i plik kot.jpg leżą w tym samym folderze. Jaką ścieżkę wpiszesz w src?", "odpowiedzi": ["../kot.jpg", "/obrazy/kot.jpg", "C:/kot.jpg", "kot.jpg"], "poprawna": 3, "wyjasnienie": "Gdy plik jest w tym samym folderze co strona, wystarczy sama nazwa pliku."}, {"pytanie": "Strona leży w galeria/, a obraz w obrazy/ (obok). Jak dojść do obrazy/pies.png?", "odpowiedzi": ["obrazy/pies.png", "../obrazy/pies.png", "galeria/obrazy/pies.png", "./pies.png"], "poprawna": 1, "wyjasnienie": "Najpierw ../ (wyjście z galeria), potem obrazy/pies.png."}, {"pytanie": "Która z tych ścieżek jest bezwzględna?", "odpowiedzi": ["obrazy/kot.jpg", "../kot.jpg", "https://example.com/kot.jpg", "kot.jpg"], "poprawna": 2, "wyjasnienie": "Pełny adres z https:// jest bezwzględny. Pozostałe są liczone od folderu strony, więc są względne."}, {"pytanie": "Dlaczego src=\"C:\\Users\\uczen\\Pulpit\\kot.jpg\" to zły pomysł?", "odpowiedzi": ["Ścieżka jest za krótka", "Przeglądarka nie czyta plików jpg", "To poprawna ścieżka względna", "Obraz będzie widać tylko na Twoim komputerze"], "poprawna": 3, "wyjasnienie": "To ścieżka z Twojego dysku. Na serwerze i u innych osób takiego pliku nie ma."}, {"pytanie": "Który znacznik jest zapisany poprawnie?", "odpowiedzi": ["<img scr=\"kot.jpg\" alt=\"Kot\">", "<img src=\"kot.jpg\" alt=\"Kot\">", "<img src=\"kot.jpg\" alt=\"Kot\"><\/img>", "<img src=\"obrazy\\kot.jpg\" alt=\"Kot\">"], "poprawna": 1, "wyjasnienie": "Atrybut to src (nie scr), img nie ma <\/img>, a w ścieżkach piszemy / zamiast \\."}, {"pytanie": "Obraz ma 800 × 600 px. W kodzie jest tylko width=\"200\". Jaka będzie wysokość?", "odpowiedzi": ["600 px", "200 px", "150 px", "800 px"], "poprawna": 2, "wyjasnienie": "Szerokość zmalała 4 razy, więc wysokość też: 600 : 4 = 150 px. Proporcje zostają zachowane."}, {"pytanie": "Co zwykle zobaczysz, gdy pliku obrazu nie ma pod podaną ścieżką?", "odpowiedzi": ["Tekst z alt, często z ikonką zepsutego obrazu", "Pustą białą stronę", "Komunikat o błędzie serwera", "Poprzednio wczytany obraz"], "poprawna": 0, "wyjasnienie": "Przeglądarka pokazuje w miejscu obrazu tekst zastępczy z alt. Reszta strony działa normalnie."}, {"pytanie": "Który format to grafika wektorowa, ostra w każdym rozmiarze (np. logo)?", "odpowiedzi": ["jpg", "png", "gif", "svg"], "poprawna": 3, "wyjasnienie": "SVG opisuje kształty, a nie piksele, więc można go powiększać bez utraty jakości."}], LOS = null;
+  let DANE = WSZYSTKIE, stan = [];   // stan: null = bez odpowiedzi, true = dobrze, false = źle
   const box = document.getElementById("quiz"), wynik = document.getElementById("wynik"), popraw = document.getElementById("popraw");
   const root = document.documentElement;
-  const stan = DANE.map(() => null);   // null = bez odpowiedzi, true = dobrze, false = źle
   const esc = s => String(s).replace(/[&<>"]/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;"}[c]));
   const fmt = s => esc(s).replace(/`([^`]+)`/g, "<code>$1</code>");
   function show() {
+    if (!DANE.length) { wynik.textContent = "Zaznacz co najmniej jedno zagadnienie."; popraw.hidden = true; return; }
     const done = stan.filter(x => x !== null).length, good = stan.filter(x => x === true).length, bad = stan.filter(x => x === false).length;
     wynik.textContent = done < DANE.length ? "Odpowiedziano: " + done + " z " + DANE.length + " · dobrze: " + good
       : "Wynik: " + good + " / " + DANE.length + (good === DANE.length ? " — komplet!" : "");
@@ -190,7 +222,7 @@ summary:focus-visible,a:focus-visible,button:focus-visible{outline:3px solid var
   function question(i) {
     const q = DANE[i], el = document.createElement("section");
     el.className = "q";
-    el.innerHTML = "<h2><span class=\"no\">" + String(i + 1).padStart(2, "0") + "</span>" + fmt(q.pytanie) + "</h2><div class=\"opts\"></div>"
+    el.innerHTML = (q.temat ? "<p class=\"meta temat\">" + esc(q.temat) + "</p>" : "") + "<h2><span class=\"no\">" + String(i + 1).padStart(2, "0") + "</span>" + fmt(q.pytanie) + "</h2><div class=\"opts\"></div>"
       + "<p class=\"why\">" + fmt(q.wyjasnienie || "") + "</p>";
     const opts = el.querySelector(".opts");
     q.odpowiedzi.forEach((a, j) => {
@@ -228,7 +260,33 @@ summary:focus-visible,a:focus-visible,button:focus-visible{outline:3px solid var
     root.dataset.theme = dark ? "light" : "dark";
     try { localStorage.setItem("cppkurs-theme", root.dataset.theme); } catch (e) {}
   });
-  render(false);
+  function start(lista) { DANE = lista; stan = DANE.map(() => null); box.innerHTML = ""; render(false); }
+  if (LOS) {
+    // powtórka: losowy zestaw pytań z zaznaczonych zagadnień
+    const panel = document.getElementById("los"), lista = panel.querySelector(".tematy"), ile = document.getElementById("ile");
+    [...new Set(WSZYSTKIE.map(q => q.temat))].forEach(t => {
+      const l = document.createElement("label");
+      l.innerHTML = "<input type=\"checkbox\" checked><span>" + esc(t) + " <span class=\"meta\">(" + WSZYSTKIE.filter(q => q.temat === t).length + ")</span></span>";
+      l.querySelector("input").value = t;
+      lista.appendChild(l);
+    });
+    LOS.liczby.filter(n => n < WSZYSTKIE.length).concat([0]).forEach(n => {
+      const o = document.createElement("option");
+      o.value = n;
+      o.textContent = n ? n : "wszystkie (" + WSZYSTKIE.length + ")";
+      ile.appendChild(o);
+    });
+    ile.value = WSZYSTKIE.length > LOS.domyslnie ? LOS.domyslnie : 0;
+    const losuj = () => {
+      const wybrane = new Set([...lista.querySelectorAll("input:checked")].map(x => x.value));
+      const pula = WSZYSTKIE.filter(q => wybrane.has(q.temat));
+      for (let i = pula.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [pula[i], pula[j]] = [pula[j], pula[i]]; }
+      start(pula.slice(0, Number(ile.value) || pula.length));
+    };
+    document.getElementById("losuj").addEventListener("click", losuj);
+    panel.hidden = false;
+    losuj();
+  } else start(WSZYSTKIE);
 })();
 </script>
 </body>

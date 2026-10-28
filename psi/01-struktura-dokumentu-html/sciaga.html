@@ -68,7 +68,12 @@ pre code{background:none;padding:0;font-size:inherit;overflow-wrap:normal}
 kbd{font-family:var(--mono);font-size:.85em;border:1.5px solid var(--line);border-bottom-width:3px;padding:0 .35em;background:var(--panel)}
 
 .links-top{display:flex;flex-wrap:wrap;gap:.5em;margin:.4em 0 1em}
-.links-top a{border:2px solid var(--ink);background:var(--panel);padding:.3em .8em;text-decoration:none;box-shadow:3px 3px 0 var(--ink)}
+.links-top a,.links-top button{font:inherit;font-weight:600;color:var(--ink);cursor:pointer;border:2px solid var(--ink);background:var(--panel);padding:.3em .8em;text-decoration:none;box-shadow:3px 3px 0 var(--ink)}
+
+.toc{display:flex;flex-wrap:wrap;gap:.35em .5em;margin:0 0 1.2em;font-size:.92rem}
+.toc a{border:1.5px solid var(--line);background:var(--panel);padding:.15em .6em;text-decoration:none;font-weight:600}
+.toc a .no{font-family:var(--mono);color:var(--margin);font-size:.85em;margin-right:.35em}
+h2[id]{scroll-margin-top:1em}
 
 .done{list-style:none;padding:0;display:grid;gap:.6em;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));margin:1.2em 0}
 .done li{border:2px solid var(--ink);background:var(--panel);padding:.8em 1em;max-width:none}
@@ -134,8 +139,21 @@ summary:focus-visible,a:focus-visible,button:focus-visible{outline:3px solid var
   details .ans{padding-left:1.2em}
 }
 @media print{
-  body{background:none}
-  .sheet::before,.theme,.links-top{display:none}
+  /* zawsze jasny motyw na papierze (ciemny dałby jasny tekst na białej kartce) */
+  :root,:root[data-theme],:root:not([data-theme="light"]){
+    --paper:#FFFFFF; --grid:#DCE6F5; --ink:#1D2A5C; --ink-soft:#4A5785;
+    --margin:#D9433B; --marker:#FFE45C; --marker-ink:#1D2A5C; --code-bg:#EEF2FA; --line:#C5D3EA;
+    --ok:#1F8A5B; --bad:#C2372F; --panel:#FFFFFF;
+    --tag:#7A3FC2; --attr:#2563C9; --val:#1F8A5B;
+    color-scheme:light;
+  }
+  body{background:none;font-size:11pt;line-height:1.45;padding:0}
+  .sheet{max-width:none;padding:0}
+  .sheet::before,.theme,.links-top,.toc{display:none}
+  h1{font-size:24pt}
+  h2{font-size:16pt;margin:1.3em 0 .4em}
+  h2,h3{break-after:avoid}
+  pre{font-size:8.5pt}
   pre,.done li,.card,details{box-shadow:none;break-inside:avoid}
   details .ans{display:block}
 }
@@ -147,10 +165,11 @@ summary:focus-visible,a:focus-visible,button:focus-visible{outline:3px solid var
 <main class="sheet">
   <p class="eyebrow">Projektowanie Stron Internetowych · ściąga</p>
   <h1>Struktura dokumentu HTML</h1>
-  <p class="links-top"><a href="prezentacja.html">Prezentacja</a><a href="quiz.html">Quiz</a></p>
+  <p class="links-top"><a href="prezentacja.html">Prezentacja</a><a href="quiz.html">Quiz</a><button type="button" id="drukuj">Drukuj / PDF</button></p>
+<nav class="toc" aria-label="Spis sekcji"><a href="#s01"><span class="no">01</span>Szkielet strony</a><a href="#s02"><span class="no">02</span>Znacznik, element, atrybut</a><a href="#s03"><span class="no">03</span>Typowe błędy</a><a href="#s04"><span class="no">04</span>Słowniczek</a><a href="#s05"><span class="no">05</span>Sprawdź się</a><a href="#s06"><span class="no">06</span>Spróbuj sam</a></nav>
 <p class="lead">Każda strona WWW to zwykły plik tekstowy z rozszerzeniem <code>.html</code>. Ma stały szkielet: przeglądarka czyta go od góry i dzięki niemu wie, jak pokazać stronę.</p>
 
-<h2><span class="no">01</span>Szkielet strony</h2>
+<h2 id="s01"><span class="no">01</span>Szkielet strony</h2>
 <pre><code><span class="t">&lt;!DOCTYPE html&gt;</span>
 <span class="t">&lt;html</span> <span class="a">lang</span>=<span class="v">"pl"</span><span class="t">&gt;</span>
 <span class="t">&lt;head&gt;</span>
@@ -179,7 +198,7 @@ summary:focus-visible,a:focus-visible,button:focus-visible{outline:3px solid var
   </tbody>
 </table></div>
 
-<h2><span class="no">02</span>Znacznik, element, atrybut</h2>
+<h2 id="s02"><span class="no">02</span>Znacznik, element, atrybut</h2>
 <div class="split">
   <div class="card"><h3>Znacznik i element</h3><p>Znacznik otwierający <code>&lt;title&gt;</code> i zamykający <code>&lt;/title&gt;</code> (z ukośnikiem) obejmują treść. Całość to element.</p></div>
   <div class="card"><h3>Atrybut</h3><p>Dodatkowa informacja wpisana w znaczniku otwierającym: <code>nazwa="wartość"</code>, np. <code>lang="pl"</code>.</p></div>
@@ -190,7 +209,7 @@ summary:focus-visible,a:focus-visible,button:focus-visible{outline:3px solid var
 </div>
 <p>Wcięcia (spacje na początku linii) nie zmieniają wyglądu strony, ale pokazują, co jest w czym. Pisz je zawsze.</p>
 
-<h2><span class="no">03</span>Typowe błędy</h2>
+<h2 id="s03"><span class="no">03</span>Typowe błędy</h2>
 <ul class="check bad-list">
   <li><code>lang="en"</code> przy polskiej treści: zostało z szablonu, zmień na <code>pl</code>.</li>
   <li><code>&lt;title&gt;Document&lt;/title&gt;</code>: tytuł z szablonu zamiast własnego.</li>
@@ -199,7 +218,7 @@ summary:focus-visible,a:focus-visible,button:focus-visible{outline:3px solid var
   <li><code>&lt;head&gt;&lt;title&gt;…&lt;/head&gt;&lt;/title&gt;</code>: zamknięcia w złej kolejności.</li>
 </ul>
 
-<h2><span class="no">04</span>Słowniczek</h2>
+<h2 id="s04"><span class="no">04</span>Słowniczek</h2>
 <dl class="gloss">
   <dt>HTML</dt><dd>język znaczników, którym opisujemy treść i budowę strony WWW</dd>
   <dt>znacznik (tag)</dt><dd>nazwa w nawiasach ostrych, np. <code>&lt;body&gt;</code>; zamykający ma ukośnik: <code>&lt;/body&gt;</code></dd>
@@ -214,7 +233,7 @@ summary:focus-visible,a:focus-visible,button:focus-visible{outline:3px solid var
   <dt>Emmet</dt><dd>skróty wbudowane w VS Code, np. <code>!</code> + <code>Tab</code> wstawia szkielet strony</dd>
 </dl>
 
-<h2><span class="no">05</span>Sprawdź się</h2>
+<h2 id="s05"><span class="no">05</span>Sprawdź się</h2>
 <p>Odpowiedz w myślach, potem rozwiń.</p>
 <details><summary>Ile atrybutów ma <code>&lt;meta name="viewport" content="…"&gt;</code>? Jak się nazywają?</summary><div class="ans"><p>Dwa: <code>name</code> i <code>content</code>.</p></div></details>
 <details><summary>Czy wcięcia w kodzie zmieniają wygląd strony?</summary><div class="ans"><p>Nie. Służą tylko temu, żeby człowiek widział, co jest w czym.</p></div></details>
@@ -224,7 +243,7 @@ summary:focus-visible,a:focus-visible,button:focus-visible{outline:3px solid var
 <details><summary><span class="lvl">trudniejsze</span> Porównaj <code>lang="pl"</code> i <code>charset="UTF-8"</code>. Który z nich odpowiada za polskie litery w pliku?</summary><div class="ans"><p><code>charset</code>. Atrybut <code>lang</code> mówi tylko, w jakim języku jest treść (korzysta z tego np. czytnik ekranu i tłumacz).</p></div></details>
 <details><summary><span class="lvl">trudniejsze</span> W <code>&lt;head&gt;</code> ktoś wpisał <code>&lt;p&gt;Witaj!&lt;/p&gt;</code>. Czy napis pojawi się na stronie?</summary><div class="ans"><p>Tak, bo przeglądarka sama „naprawi” kod i przeniesie go do body. Ale to błąd: walidator go zgłosi, a w trudniejszych przypadkach strona się rozjedzie.</p></div></details>
 
-<h2><span class="no">06</span>Spróbuj sam</h2>
+<h2 id="s06"><span class="no">06</span>Spróbuj sam</h2>
 <ol class="steps">
   <li>Utwórz folder <code>moja-strona</code>, a w nim plik <code>index.html</code>. Wpisz <code>!</code>, naciśnij <code>Tab</code> i popraw język oraz tytuł.
     <details class="hint"><summary>Rozwiązanie</summary><div class="ans"><pre><code><span class="t">&lt;html</span> <span class="a">lang</span>=<span class="v">"pl"</span><span class="t">&gt;</span>
@@ -252,6 +271,7 @@ summary:focus-visible,a:focus-visible,button:focus-visible{outline:3px solid var
     root.dataset.theme = dark ? "light" : "dark";
     try { localStorage.setItem("cppkurs-theme", root.dataset.theme); } catch (e) {}
   });
+  document.getElementById("drukuj").addEventListener("click", function () { window.print(); });
   window.addEventListener("beforeprint", function () {
     document.querySelectorAll("details").forEach(function (d) { d.open = true; });
   });
