@@ -665,7 +665,7 @@ $('blReset').onclick=()=>{blWyb.clear();blMaluj();$('blWynik').textContent='? / 
 
 makeQuiz($('quiz'),quizHtml([
   ['Który znacznik oznacza najważniejszy nagłówek strony?',['<h6>','<h1>','<head>','<header>'],1,'h1 to nagłówek pierwszego poziomu. <head> to część z informacjami o stronie, nie nagłówek.'],
-  ['Co pokaże przeglądarka?',['Ala     ma   kota','Każde słowo w nowej linii','Błąd strony','Ala ma kota'],3,'Wiele spacji przeglądarka zamienia na jedną spację.','<p>Ala     ma   kota</p>'],
+  ['Co pokaże przeglądarka? (· w odpowiedziach to spacja)',['Ala·····ma···kota','Każde słowo w nowej linii','Błąd strony','Ala ma kota'],3,'Wiele spacji z rzędu przeglądarka zamienia na jedną, więc widać „Ala ma kota”.','<p>Ala     ma   kota</p>'],
   ['Jak przejść do nowej linii wewnątrz jednego akapitu?',['Nacisnąć Enter w kodzie','Wstawić <hr>','Wstawić <br>','Wstawić </br>'],2,'<br> łamie linię. Enter w kodzie to dla przeglądarki zwykła spacja, a </br> to błędny zapis.'],
   ['Do czego służy znacznik <hr>?',['Oznacza zmianę tematu linią poziomą','Tworzy nagłówek','Łamie linię w akapicie','Pogrubia tekst'],0,'<hr> oddziela dwa tematy; przeglądarka rysuje poziomą kreskę.'],
   ['Po dziale <h2> chcesz dodać jego poddział. Którego znacznika użyjesz?',['<h1>','<h4>','<p>','<h3>'],3,'Poddział jest o jeden poziom niżej: po h2 przychodzi h3.'],
@@ -689,7 +689,8 @@ textarea,input,code,pre,.codebox{font-variant-ligatures:none}
 .navhint[hidden]{display:none}
 @media (max-width:560px){.navhint{display:none}}
 .quiz .opts{counter-reset:opt}
-.quiz .opts button{counter-increment:opt;display:flex;align-items:baseline;gap:.6em}
+.quiz .opts button{counter-increment:opt;display:flex;align-items:baseline;gap:.6em;white-space:pre-wrap}
+.quiz h2{white-space:pre-wrap}
 .quiz .opts button::before{content:counter(opt);flex:none;display:inline-grid;place-items:center;width:1.7em;height:1.7em;border:2px solid currentColor;font-family:var(--mono);font-size:.85em;font-weight:600}
 .quiz .qnum::after{content:" · odpowiedź: klawisz 1–4, dalej: Enter";color:var(--ink-soft);font-size:.85em}
 @media (hover:none){.quiz .qnum::after{content:none}}

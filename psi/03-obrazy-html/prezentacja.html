@@ -804,7 +804,8 @@ textarea,input,code,pre,.codebox{font-variant-ligatures:none}
 .navhint[hidden]{display:none}
 @media (max-width:560px){.navhint{display:none}}
 .quiz .opts{counter-reset:opt}
-.quiz .opts button{counter-increment:opt;display:flex;align-items:baseline;gap:.6em}
+.quiz .opts button{counter-increment:opt;display:flex;align-items:baseline;gap:.6em;white-space:pre-wrap}
+.quiz h2{white-space:pre-wrap}
 .quiz .opts button::before{content:counter(opt);flex:none;display:inline-grid;place-items:center;width:1.7em;height:1.7em;border:2px solid currentColor;font-family:var(--mono);font-size:.85em;font-weight:600}
 .quiz .qnum::after{content:" · odpowiedź: klawisz 1–4, dalej: Enter";color:var(--ink-soft);font-size:.85em}
 @media (hover:none){.quiz .qnum::after{content:none}}
