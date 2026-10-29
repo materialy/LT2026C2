@@ -6,14 +6,14 @@ Najnowsze na górze. W folderze każdego zagadnienia: `sciaga.html`, `prezentacj
 
 Temat: Elementy składowe strony www
 
-- **Na lekcji:** [Linki w HTML](psi/04-linki-html/sciaga.html) (poprawiono 28.10) · [Listy w HTML](psi/05-listy-html/sciaga.html) · [Tabele w HTML](psi/06-tabele-html/sciaga.html)
+- **Na lekcji:** [Linki w HTML](psi/04-linki-html/sciaga.html) (poprawiono 28.10) · [Listy w HTML](psi/05-listy-html/sciaga.html) (poprawiono 29.10) · [Tabele w HTML](psi/06-tabele-html/sciaga.html) (poprawiono 29.10)
 - **Powtórz:** [Struktura dokumentu HTML](psi/01-struktura-dokumentu-html/sciaga.html) (poprawiono 28.10) · [Obrazy w HTML](psi/03-obrazy-html/sciaga.html) (poprawiono 28.10)
 
 ## 2026-10-16 · Programowanie Obiektowe
 
 Temat: Podstawowe elementy c++
 
-- **Na lekcji:** [Proste programy obliczeniowe w C++](po/07-programy-obliczeniowe-cpp/sciaga.html)
+- **Na lekcji:** [Proste programy obliczeniowe w C++](po/07-programy-obliczeniowe-cpp/sciaga.html) (poprawiono 29.10)
 - **Powtórz:** [Zmienne w C++](po/04-zmienne-cpp/sciaga.html) · [Wczytywanie danych: cin](po/05-wczytywanie-cin/sciaga.html)
 
 ## 2026-10-09 · Programowanie Obiektowe
