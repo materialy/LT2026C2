@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="materialy" content="strona-grupy">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'self' 'unsafe-inline' file:; font-src 'self' file:; img-src 'self' data: file:; frame-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'">
+<meta name="robots" content="noindex, nofollow">
+<link rel="stylesheet" href="../../assets/fonty.css">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Wczytywanie danych: cin</title>
+<style>
+
+:root{
+  --paper:#FBFCFF; --grid:#DCE6F5; --ink:#1D2A5C; --ink-soft:#4A5785;
+  --margin:#D9433B; --marker:#FFE45C; --code-bg:#EEF2FA; --line:#C5D3EA;
+  --ok:#1F8A5B; --bad:#C2372F; --panel:#FFFFFF;
+  --sans:"Bricolage Grotesque", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --mono:"JetBrains Mono", Consolas, "Courier New", monospace;
+  --hand:"Caveat", "Comic Sans MS", cursive;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#131A2E; --grid:#1F2945; --ink:#E3E8F7; --ink-soft:#A3AECF;
+    --margin:#F06A5F; --marker:#E8C93A; --code-bg:#1B2440; --line:#2E3A5E;
+    --ok:#4CC98E; --bad:#F07A70; --panel:#18203A;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#131A2E; --grid:#1F2945; --ink:#E3E8F7; --ink-soft:#A3AECF;
+  --margin:#F06A5F; --marker:#E8C93A; --code-bg:#1B2440; --line:#2E3A5E;
+  --ok:#4CC98E; --bad:#F07A70; --panel:#18203A;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{height:100%;scroll-padding-top:env(safe-area-inset-top,0px)}
+body{
+  height:100%;margin:0;color:var(--ink);font-family:var(--sans);
+  background-color:var(--paper);
+  background-image:
+    linear-gradient(var(--grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size:24px 24px;
+  overflow:hidden;
+}
+/* czerwony margines zeszytu */
+body::before{content:"";position:fixed;top:0;bottom:0;left:clamp(18px,5vw,64px);width:2px;background:var(--margin);opacity:.7;z-index:0}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:3px solid var(--margin);outline-offset:2px}
+
+.deck{position:relative;height:100%;z-index:1}
+.slide{
+  position:absolute;inset:0 0 72px 0;overflow-y:auto;
+  padding:clamp(20px,5vh,56px) clamp(20px,5vw,72px) 24px calc(clamp(18px,5vw,64px) + clamp(20px,4vw,48px));
+  opacity:0;visibility:hidden;transform:translateX(24px);
+  transition:opacity .35s ease, transform .35s ease, visibility 0s .35s;
+}
+.slide.active{opacity:1;visibility:visible;transform:none;transition:opacity .35s ease, transform .35s ease}
+.slide.before{transform:translateX(-24px)}
+.inner{max-width:1080px}
+h1,h2{font-weight:800;letter-spacing:-.02em;line-height:1.05;margin:0 0 .5em}
+h1{font-size:clamp(2.4rem,7vw,5.2rem)}
+h2{font-size:clamp(1.8rem,4.2vw,3rem)}
+p,li{font-size:clamp(1rem,1.6vw,1.2rem);line-height:1.55;max-width:68ch}
+.lead{font-size:clamp(1.1rem,2vw,1.45rem);color:var(--ink-soft)}
+.note{font-family:var(--hand);font-size:clamp(1.4rem,2.4vw,1.9rem);color:var(--margin);line-height:1.15;transform:rotate(-1.5deg);display:inline-block}
+mark{background:linear-gradient(transparent 45%, var(--marker) 45%, var(--marker) 90%, transparent 90%);color:inherit;padding:0 .1em}
+code,.mono{font-family:var(--mono);font-size:.92em}
+.k{color:#7A3FC2}.s{color:#1F8A5B}.n{color:#C2372F}.p{color:#2563C9}.c{color:var(--ink-soft);font-style:italic}
+:root[data-theme="dark"] .k{color:#C29BFF} :root[data-theme="dark"] .s{color:#6FD8A2} :root[data-theme="dark"] .n{color:#FF8E86} :root[data-theme="dark"] .p{color:#7FB0FF}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .k{color:#C29BFF}:root:not([data-theme="light"]) .s{color:#6FD8A2}:root:not([data-theme="light"]) .n{color:#FF8E86}:root:not([data-theme="light"]) .p{color:#7FB0FF}}
+
+/* tytuł */
+.title-code{font-family:var(--mono);font-size:clamp(1rem,2.2vw,1.5rem);background:var(--code-bg);border:2px solid var(--ink);padding:.9em 1.1em;display:inline-block;margin:1.2em 0;box-shadow:6px 6px 0 var(--ink)}
+.cursor{display:inline-block;width:.6em;height:1.1em;background:var(--ink);vertical-align:-.15em;animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+.meta{color:var(--ink-soft);font-size:1rem}
+.meta a{color:inherit}
+
+/* agenda */
+.agenda{list-style:none;padding:0;margin:0;display:grid;gap:2px;max-width:760px}
+.agenda li{max-width:none}
+.agenda button{width:100%;display:grid;grid-template-columns:5.5em 1fr;gap:1em;text-align:left;background:transparent;border:0;border-bottom:1px dashed var(--line);padding:.6em .2em;font-size:clamp(1rem,1.6vw,1.15rem)}
+.agenda button:hover{background:var(--code-bg)}
+.agenda .t{font-family:var(--mono);color:var(--margin)}
+
+/* dwie kolumny */
+.two{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:clamp(20px,4vw,48px);align-items:start}
+@media (max-width:820px){.two{grid-template-columns:1fr}}
+
+/* drzewo plików */
+.tree{font-family:var(--mono);font-size:clamp(.9rem,1.4vw,1.05rem);background:var(--panel);border:2px solid var(--ink);padding:1em;box-shadow:6px 6px 0 var(--ink)}
+.tree button{display:block;width:100%;text-align:left;background:none;border:0;padding:.35em .5em;border-radius:3px;font-family:var(--mono);font-size:inherit}
+.tree button:hover{background:var(--code-bg)}
+.tree button[aria-pressed="true"]{background:var(--marker);color:#1D2A5C}
+.tree .dir{padding:.35em .5em;color:var(--ink-soft)}
+.tree .ind1{padding-left:1.6em}.tree .ind2{padding-left:3.2em}
+.explain{border-left:4px solid var(--margin);padding:.4em 0 .4em 1em;min-height:9em}
+.explain h3{margin:0 0 .3em;font-size:1.4rem;font-family:var(--mono)}
+.tag{display:inline-block;font-size:.85rem;border:1.5px solid currentColor;padding:.05em .55em;border-radius:99px;margin-bottom:.6em}
+
+/* kod klikalny */
+.codebox{background:var(--code-bg);border:2px solid var(--ink);font-family:var(--mono);font-size:clamp(.85rem,1.45vw,1.05rem);overflow-x:auto;box-shadow:6px 6px 0 var(--ink)}
+.codebox .ln{display:flex;width:100%;background:none;border:0;text-align:left;padding:.28em .8em;font-family:var(--mono);font-size:inherit;white-space:pre}
+.codebox .ln::before{content:attr(data-n);width:2em;flex:none;color:var(--ink-soft);opacity:.6}
+.codebox button.ln:hover{background:var(--grid)}
+.codebox .ln.on{background:var(--marker);color:#1D2A5C}
+.codebox .ln.on span{color:#1D2A5C}
+.codebox div.ln{cursor:default}
+
+/* strumienie */
+.streams{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:1em;margin:1.5em 0;max-width:820px}
+.box{border:2px solid var(--ink);background:var(--panel);padding:1em;text-align:center;font-weight:600;min-height:5.5em;display:flex;flex-direction:column;justify-content:center;gap:.3em}
+.box small{font-weight:400;color:var(--ink-soft)}
+.arrow{font-family:var(--mono);font-size:clamp(1.6rem,4vw,2.6rem);font-weight:600;text-align:center;color:var(--margin);min-width:3.5em;position:relative}
+.packet{position:absolute;top:-1.2em;left:50%;font-size:.9rem;background:var(--marker);color:#1D2A5C;padding:.1em .5em;transform:translateX(-50%);white-space:nowrap;opacity:0}
+.packet.go-right{animation:goR 1.1s ease forwards}
+.packet.go-left{animation:goL 1.1s ease forwards}
+@keyframes goR{0%{opacity:0;transform:translateX(-160%)}20%{opacity:1}100%{opacity:0;transform:translateX(60%)}}
+@keyframes goL{0%{opacity:0;transform:translateX(60%)}20%{opacity:1}100%{opacity:0;transform:translateX(-160%)}}
+.seg{display:inline-flex;border:2px solid var(--ink);margin-bottom:.5em}
+.seg button{background:transparent;border:0;padding:.5em 1em;font-weight:600}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
+
+/* RAM */
+.ram{display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:6px;max-width:560px;margin:1em 0}
+.cell{border:1.5px solid var(--line);background:var(--panel);aspect-ratio:1.4;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:var(--mono);font-size:.78rem;color:var(--ink-soft);transition:background .3s,border-color .3s}
+.cell b{font-size:1.25rem;color:var(--ink)}
+.cell.used{border:2px solid var(--margin);background:var(--code-bg)}
+.cell.used .nm{color:var(--margin);font-weight:600}
+.btn{border:2px solid var(--ink);background:var(--panel);padding:.55em 1.1em;font-weight:600;box-shadow:3px 3px 0 var(--ink);transition:transform .1s, box-shadow .1s}
+.btn:active{transform:translate(3px,3px);box-shadow:0 0 0 var(--ink)}
+.btn.primary{background:var(--ink);color:var(--paper)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.row{display:flex;flex-wrap:wrap;gap:.6em;align-items:center;margin:.6em 0}
+input[type=number],input[type=text]{font-family:var(--mono);font-size:1rem;border:2px solid var(--ink);background:var(--panel);color:var(--ink);padding:.45em .6em;width:7em}
+.log{font-family:var(--mono);font-size:.95rem;min-height:1.5em;color:var(--ink-soft)}
+
+/* dzielenie */
+.divrow{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1em;margin-top:1em;max-width:560px}
+.res{border:2px dashed var(--line);padding:.8em;font-family:var(--mono)}
+.res .big{font-size:1.8rem;font-weight:600;color:var(--ink)}
+
+/* przypisanie stepper */
+.assign{font-family:var(--mono);font-size:clamp(1rem,1.8vw,1.25rem)}
+.assign .st{padding:.35em .6em;border-left:4px solid transparent}
+.assign .st.on{border-left-color:var(--margin);background:var(--code-bg)}
+.xbox{display:inline-flex;flex-direction:column;align-items:center;border:2px solid var(--margin);padding:.6em 1.4em;font-family:var(--mono);margin-top:1em}
+.xbox b{font-size:2.4rem}
+
+/* plan programu */
+.flow{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0;max-width:960px;margin:1.5em 0;counter-reset:f}
+@media (max-width:700px){.flow{grid-template-columns:1fr}}
+.flow > div{border:2px solid var(--ink);margin:-1px;padding:1.2em;background:var(--panel);position:relative}
+.flow h3{margin:0 0 .3em;font-size:1.3rem}
+.flow h3::before{counter-increment:f;content:counter(f) ". ";color:var(--margin)}
+.flow code{display:block;margin-top:.6em;background:var(--code-bg);padding:.4em .6em}
+
+/* konsola */
+.console{background:#0E1430;color:#D8E0FF;font-family:var(--mono);font-size:clamp(.85rem,1.4vw,1rem);padding:1em;min-height:12em;border:2px solid var(--ink);box-shadow:6px 6px 0 var(--ink);white-space:pre-wrap;word-break:break-word}
+.console .bar{display:flex;gap:6px;margin:-.4em 0 .8em}
+.console .bar i{width:10px;height:10px;border-radius:50%;background:#3A4570;display:block}
+.console input{background:transparent;border:0;border-bottom:1px solid #D8E0FF;color:#FFE45C;font-family:var(--mono);font-size:inherit;width:6em;padding:0}
+.console .ret{color:#7FA0E0}
+
+/* quiz */
+.quiz{max-width:760px}
+.qnum{font-family:var(--mono);color:var(--margin)}
+.opts{display:grid;gap:.5em;margin:1em 0}
+.opts button{text-align:left;border:2px solid var(--ink);background:var(--panel);padding:.75em 1em;font-size:clamp(1rem,1.5vw,1.1rem)}
+.opts button:hover:not(:disabled){background:var(--code-bg)}
+.opts button.right{background:var(--ok);color:#fff;border-color:var(--ok)}
+.opts button.wrong{background:var(--bad);color:#fff;border-color:var(--bad)}
+.opts button:disabled{cursor:default}
+.fb{min-height:3em}
+
+/* podsumowanie */
+.check{list-style:none;padding:0;columns:2 280px;column-gap:2.5em;max-width:900px}
+.check li{break-inside:avoid;padding:.35em 0 .35em 1.8em;position:relative;max-width:none}
+.check li::before{content:"✓";position:absolute;left:0;color:var(--margin);font-weight:800}
+.links a{color:var(--ink);font-weight:600}
+
+/* nawigacja */
+nav.ctl{position:fixed;left:0;right:0;bottom:0;z-index:5;height:calc(72px + env(safe-area-inset-bottom,0px));padding:0 clamp(12px,3vw,32px) env(safe-area-inset-bottom,0px);display:flex;align-items:center;gap:12px;background:color-mix(in srgb, var(--paper) 88%, transparent);backdrop-filter:blur(6px);border-top:2px solid var(--ink)}
+.dots{flex:1;display:flex;gap:4px;align-items:center;overflow-x:auto;padding:6px 2px}
+.dots button{flex:1;min-width:14px;height:8px;border:0;background:var(--line);padding:0}
+.dots button.done{background:var(--ink-soft)}
+.dots button.cur{background:var(--margin);height:12px}
+.navbtn{width:44px;height:44px;border:2px solid var(--ink);background:var(--panel);font-size:1.2rem;font-weight:800;display:grid;place-items:center}
+.count{font-family:var(--mono);font-size:.9rem;min-width:4.2em;text-align:center}
+.theme{width:44px;height:44px;border:2px solid var(--ink);background:var(--panel)}
+@media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
+
+.flowc{display:grid;gap:12px;max-width:540px;justify-items:center;margin:1em 0}
+.dec{border:2px solid var(--ink);background:var(--panel);padding:.8em 1.4em;font-family:var(--mono);font-weight:600;border-radius:40px}
+.branches{display:grid;grid-template-columns:1fr 1fr;gap:12px;width:100%}
+.br{border:2px solid var(--line);padding:.8em;text-align:center;background:var(--panel);transition:background .3s,border-color .3s}
+.br b{display:block;font-family:var(--mono);color:var(--margin)}
+.br.on{border-color:var(--margin);background:var(--marker);color:#1D2A5C}
+.br.on b{color:#1D2A5C}
+.tbl{border-collapse:collapse;font-family:var(--mono);font-size:clamp(.9rem,1.4vw,1.05rem)}
+.tbl td,.tbl th{border:1.5px solid var(--line);padding:.45em .9em;text-align:left;background:var(--panel)}
+.tbl th{font-family:var(--sans)}
+.chip{display:inline-block;padding:.1em .7em;border-radius:99px;font-weight:600;color:#fff;font-family:var(--mono)}
+.chip.t{background:var(--ok)}.chip.f{background:var(--bad)}
+.tog{display:inline-flex;align-items:center;gap:.5em;border:2px solid var(--ink);background:var(--panel);padding:.45em .9em;font-weight:600}
+.tog[aria-pressed="true"]{background:var(--ok);color:#fff;border-color:var(--ok)}
+.tog[aria-pressed="false"]{background:var(--bad);color:#fff;border-color:var(--bad)}
+.bars{display:flex;align-items:flex-end;gap:10px;height:200px;max-width:560px;border-bottom:2px solid var(--ink);margin:2em 0 .3em}
+.bars div{flex:1;background:var(--ink);position:relative;transition:height .4s;min-height:2px}
+.bars div span{position:absolute;top:-1.5em;left:0;right:0;text-align:center;font-family:var(--mono);font-size:.8rem;color:var(--ink)}
+.blabels{display:flex;gap:10px;max-width:560px;font-family:var(--mono)}
+.blabels span{flex:1;text-align:center}
+.out{font-family:var(--mono);background:#0E1430;color:#D8E0FF;padding:.8em 1em;border:2px solid var(--ink);white-space:pre-wrap;word-break:break-word;min-height:3em;max-height:14em;overflow:auto;font-size:clamp(.85rem,1.4vw,1rem)}
+.out .warn{color:#FF8E86}
+select{font:inherit;border:2px solid var(--ink);background:var(--panel);color:var(--ink);padding:.4em}
+input[type=range]{width:100%;max-width:420px;accent-color:var(--margin)}
+.part{background:none;border:0;border-bottom:3px solid var(--margin);font-family:var(--mono);font-size:inherit;padding:0 .15em;color:inherit;cursor:pointer}
+.part:hover{background:var(--grid)}
+.part.on{background:var(--marker);color:#1D2A5C}
+.part.on span{color:#1D2A5C}
+.big-num{font-family:var(--mono);font-size:clamp(2rem,6vw,4rem);font-weight:600;letter-spacing:-.02em}
+.trace{max-height:16em;overflow:auto}
+.trace .tbl td{padding:.3em .7em}
+.trace tr.now td{background:var(--marker);color:#1D2A5C}
+.pane h3{margin:.2em 0 .5em}
+label.inl{display:inline-flex;align-items:center;gap:.4em}
+
+/* ===== Układ pełnoekranowy (rzutnik, tablica) ===== */
+.inner{max-width:min(1800px,100%)}
+.lead{max-width:95ch}
+.two{grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:clamp(20px,3vw,60px)}
+@media (max-width:820px){.two{grid-template-columns:1fr}}
+/* elementy, które miały sztywną maks. szerokość, rozciągają się na całą kolumnę */
+.inner [style*="max-width"]{max-width:none!important}
+.ram,.bars,.blabels,.check,.flow,.divrow,.streams{max-width:none}
+.agenda,.quiz{max-width:1200px}
+/* linie kodu: zawijanie zamiast przewijania, numer linii w stałej kolumnie, zachowane spacje */
+.codebox{overflow-x:visible}
+.codebox .ln{display:block;position:relative;width:100%;padding:.28em .8em .28em 3em;white-space:pre-wrap;overflow-wrap:anywhere;text-align:left}
+.codebox .ln::before{position:absolute;left:.8em;top:.28em;width:2em}
+/* większe pismo na dużych ekranach */
+@media (min-width:1400px){html{font-size:17px}}
+@media (min-width:1750px){html{font-size:19px}}
+@media (min-width:2300px){html{font-size:23px}}
+@media (min-width:1400px){
+  p,li{font-size:clamp(1rem,1.15vw,1.3rem);max-width:80ch}
+  .codebox{font-size:clamp(.9rem,1.05vw,1.2rem)}
+  .out,.console,.tbl{font-size:clamp(.9rem,.95vw,1.1rem)}
+}
+/* nagłówki skalowane także do wysokości ekranu (niskie rzutniki 720p) */
+h1{font-size:clamp(2.2rem,min(7vw,11vh),5.2rem)}
+h2{font-size:clamp(1.6rem,min(4.2vw,6.5vh),3rem)}
+@media (max-height:800px){
+  .slide{padding-top:clamp(14px,3vh,28px)}
+  h1,h2{margin-bottom:.35em}
+  p,li{line-height:1.45}
+  .row{margin:.4em 0}
+  .title-code{margin:.7em 0}
+  .codebox .ln{padding-top:.2em;padding-bottom:.2em}
+  .codebox .ln::before{top:.2em}
+}
+@media (max-height:800px){.check li{padding:.2em 0 .2em 1.8em}}
+
+</style>
+</head>
+<body>
+<main class="deck" id="deck">
+<section class="slide" data-title="Start"><div class="inner">
+  <p class="note">Programowanie obiektowe · podstawy C++</p>
+  <h1>Wczytywanie danych:<br>cin</h1>
+  <div class="title-code"><span class="k">cin</span> &gt;&gt; napis;<span class="cursor"></span></div>
+  <p class="lead">Do tej pory program tylko mówił. Teraz zacznie słuchać: zapyta o imię albo liczbę i użyje tego, co wpiszesz.</p>
+  <p class="meta">Sterowanie: strzałki ← →, spacja lub przyciski na dole.</p>
+  <div class="row"><button class="btn primary" data-go="1">Zaczynamy →</button></div>
+</div></section>
+
+<section class="slide" data-title="Plan"><div class="inner">
+  <h2>Co omówimy</h2>
+  <p class="lead">Kliknij temat, aby do niego przejść.</p>
+  <ul class="agenda">
+   <li><button data-go="2"><span class="t">&lt;&lt; czy &gt;&gt;</span>Kierunek strzałek</button></li>
+   <li><button data-go="3"><span class="t">konsola</span>Program z lekcji na żywo</button></li>
+   <li><button data-go="4"><span class="t">spacja</span>Co trafi do zmiennej</button></li>
+   <li><button data-go="5"><span class="t">cin &gt;&gt; a &gt;&gt; b</span>Dwie liczby krok po kroku</button></li>
+   <li><button data-go="6"><span class="t">3 błędy</span>Znajdź błędy</button></li>
+   <li><button data-go="7"><span class="t">ćwiczenie</span>Ułóż program</button></li>
+   <li><button data-go="8"><span class="t">?</span>Quiz</button></li>
+  </ul>
+</div></section>
+
+<section class="slide" data-title="Strzałki"><div class="inner">
+  <h2>Kierunek strzałek</h2>
+  <p class="lead">Strzałki pokazują, dokąd płyną dane. Wybierz <code>&lt;&lt;</code> albo <code>&gt;&gt;</code> w każdej linii.</p>
+  <div class="two">
+   <div>
+    <table class="tbl" id="strzTbl" style="width:100%"></table>
+    <div class="big-num" id="strzWynik">0 / 5</div>
+   </div>
+   <div>
+    <table class="tbl" style="width:100%">
+     <tr><th>klawiatura</th><th></th><th>zmienna</th><th></th><th>ekran</th></tr>
+     <tr><td>⌨</td><td><code>cin &gt;&gt;</code></td><td class="mono">imie</td><td><code>cout &lt;&lt;</code></td><td>🖥</td></tr>
+    </table>
+    <div class="out" id="strzOut" style="margin-top:1em">Kliknij strzałkę w pierwszej linii.</div>
+   </div>
+  </div>
+</div></section>
+
+<section class="slide" data-title="Konsola"><div class="inner">
+  <h2>Program z lekcji na żywo</h2>
+  <p class="lead">Uruchom program, wpisz coś w konsoli i naciśnij Enter. Patrz, która linia się wykonuje.</p>
+  <div class="two">
+   <div>
+    <div class="codebox" id="konKod">
+     <div class="ln" data-n="1"><span class="k">string</span> napis;</div>
+     <div class="ln" data-n="2"><span class="k">cout</span> &lt;&lt; <span class="s">"Hello world!"</span> &lt;&lt; <span class="s">"My dear Friend"</span>;</div>
+     <div class="ln" data-n="3"><span class="k">cin</span> &gt;&gt; napis;</div>
+     <div class="ln" data-n="4"><span class="k">cout</span> &lt;&lt; <span class="s">"Hello world!"</span> &lt;&lt; <span class="s">"My dear Friend"</span>;</div>
+     <div class="ln" data-n="5"><span class="k">cout</span> &lt;&lt; napis;</div>
+    </div>
+    <div class="row" style="margin-top:1em"><button class="btn primary" id="konStart">Uruchom</button></div>
+    <p id="konOpis"></p>
+   </div>
+   <div>
+    <div class="console"><div class="bar"><i></i><i></i><i></i></div><span id="conOut"></span></div>
+    <div class="row" style="margin-top:.6em"><input type="text" id="konWej" class="mono" placeholder="wpisz tu, np. Filemon" disabled><button class="btn" id="konEnter" disabled>Enter ⏎</button></div>
+    <div class="explain" id="konEx"></div>
+   </div>
+  </div>
+</div></section>
+
+<section class="slide" data-title="Co trafi do zmiennej"><div class="inner">
+  <h2>Co trafi do zmiennej?</h2>
+  <p class="lead">Wpisz, jaką wartość dostanie zmienna. <code>·</code> to spacja.</p>
+  <div class="two">
+   <div>
+    <table class="tbl" id="trafTbl" style="width:100%"></table>
+    <div class="row" style="margin-top:1em"><button class="btn primary" id="trafSpr">Sprawdź</button><button class="btn" id="trafPokaz">Pokaż odpowiedzi</button><button class="btn" id="trafReset">Od nowa</button></div>
+   </div>
+   <div>
+    <div class="big-num" id="trafWynik">? / 6</div>
+    <div class="explain" id="trafEx"><p class="note">spacja kończy wczytywanie</p></div>
+    <h3>Sprawdź sam</h3>
+    <div class="row"><label class="inl">wpisano: <input type="text" id="lab" class="mono" value="Kot Filemon"></label></div>
+    <div class="out" id="labOut"></div>
+   </div>
+  </div>
+</div></section>
+
+<section class="slide" data-title="Dwie liczby"><div class="inner">
+  <h2>Dwie liczby krok po kroku</h2>
+  <p class="lead">Wpisz, co poda użytkownik, i wykonuj program linia po linii.</p>
+  <div class="two">
+   <div>
+    <div class="codebox" id="dwaKod">
+     <div class="ln" data-n="1"><span class="k">int</span> a, b;</div>
+     <div class="ln" data-n="2"><span class="k">cout</span> &lt;&lt; <span class="s">"Podaj dwie liczby: "</span>;</div>
+     <div class="ln" data-n="3"><span class="k">cin</span> &gt;&gt; a &gt;&gt; b;</div>
+     <div class="ln" data-n="4"><span class="k">cout</span> &lt;&lt; <span class="s">"Suma: "</span> &lt;&lt; a + b &lt;&lt; <span class="k">endl</span>;</div>
+     <div class="ln" data-n="5"><span class="k">cout</span> &lt;&lt; <span class="s">"Iloczyn: "</span> &lt;&lt; a * b &lt;&lt; <span class="k">endl</span>;</div>
+    </div>
+    <div class="row" style="margin-top:1em"><label class="inl">użytkownik wpisze: <input type="text" id="dwaWej" class="mono" value="3 5"></label></div>
+    <div class="row"><button class="btn primary" id="dwaDalej">Następny krok</button><button class="btn" id="dwaReset">Od nowa</button></div>
+    <p id="dwaOpis"></p>
+   </div>
+   <div>
+    <table class="tbl" style="width:100%"><tr><th>a</th><th>b</th><th>bufor wejścia</th></tr><tr><td id="dwaA">—</td><td id="dwaB">—</td><td id="dwaBuf" class="mono">(pusty)</td></tr></table>
+    <div class="out" id="dwaEkran" style="margin-top:1em"></div>
+   </div>
+  </div>
+</div></section>
+
+<section class="slide" data-title="Znajdź błędy"><div class="inner">
+  <h2>Znajdź 3 błędy</h2>
+  <p class="lead">Kliknij linijki, w których jest błąd, i naciśnij „Sprawdź”.</p>
+  <div class="two">
+   <div class="codebox" id="bledy">
+    <button class="ln" data-n="1"><span class="p">#include</span> <span class="s">&lt;iostream&gt;</span></button>
+    <button class="ln" data-n="2"><span class="p">#include</span> <span class="s">&lt;string&gt;</span></button>
+    <button class="ln" data-n="3"><span class="k">using namespace</span> std;</button>
+    <button class="ln" data-n="4"><span class="k">int</span> main() {</button>
+    <button class="ln" data-n="5">    <span class="k">string</span> imie;</button>
+    <button class="ln" data-n="6">    <span class="k">cout</span> &lt;&lt; <span class="s">"Podaj imie: "</span>;</button>
+    <button class="ln" data-n="7">    <span class="k">cin</span> &lt;&lt; imie;</button>
+    <button class="ln" data-n="8">    <span class="k">cout</span> &gt;&gt; <span class="s">"Ile masz lat? "</span>;</button>
+    <button class="ln" data-n="9">    <span class="k">cin</span> &gt;&gt; wiek;</button>
+    <button class="ln" data-n="10">    <span class="k">cout</span> &lt;&lt; <span class="s">"Witaj "</span> &lt;&lt; imie &lt;&lt; <span class="k">endl</span>;</button>
+    <button class="ln" data-n="11">    <span class="k">return</span> <span class="n">0</span>; }</button>
+   </div>
+   <div>
+    <div class="row"><button class="btn primary" id="bledySpr">Sprawdź</button><button class="btn" id="bledyReset">Od nowa</button></div>
+    <div class="big-num" id="bledyWynik">0 zaznaczonych</div>
+    <div class="explain" id="bledyEx"><p class="note">Patrz na strzałki i deklaracje.</p></div>
+   </div>
+  </div>
+</div></section>
+
+<section class="slide" data-title="Ćwiczenie"><div class="inner">
+  <h2>Ćwiczenie: ułóż program</h2>
+  <p class="lead">Program ma zapytać o imię i wiek, a potem powiedzieć, ile lat będziesz mieć za rok. Klikaj linie w dobrej kolejności.</p>
+  <div class="two">
+   <div>
+    <h3>Dostępne linie</h3>
+    <div class="codebox" id="ukPula"></div>
+   </div>
+   <div>
+    <h3>Twój program <span class="meta">(kliknij linię, żeby ją cofnąć)</span></h3>
+    <div class="codebox" id="ukProg"></div>
+    <div class="row" style="margin-top:1em"><button class="btn primary" id="ukSpr">Sprawdź</button><button class="btn" id="ukPokaz">Pokaż przykładowe rozwiązanie</button><button class="btn" id="ukReset">Od nowa</button></div>
+    <div class="out" id="ukOut">Ułóż wszystkie 7 linii.</div>
+   </div>
+  </div>
+</div></section>
+
+<section class="slide" data-title="Quiz"><div class="inner quiz" id="quiz"></div></section>
+
+<section class="slide" data-title="Podsumowanie"><div class="inner">
+  <h2>Do zapamiętania</h2>
+  <ul class="check">
+   <li><code>cin &gt;&gt; x;</code> wczytuje wartość z klawiatury do zmiennej <code>x</code>.</li>
+   <li><code>cout &lt;&lt;</code> wypisuje, <code>cin &gt;&gt;</code> wczytuje: strzałki pokazują kierunek danych.</li>
+   <li>Za <code>&gt;&gt;</code> stoi zawsze zadeklarowana wcześniej zmienna.</li>
+   <li>Program czeka na <code>cin</code>, aż użytkownik naciśnie Enter.</li>
+   <li>Przed <code>cin</code> wypisz komunikat, co wpisać, np. <code>"Podaj wiek: "</code>.</li>
+   <li><code>cin &gt;&gt;</code> kończy na spacji; reszta czeka w buforze na kolejne <code>cin</code>.</li>
+   <li><code>cin &gt;&gt; a &gt;&gt; b;</code> wczytuje dwie wartości oddzielone spacją lub Enterem.</li>
+   <li>Całą linię ze spacjami wczytasz przez <code>getline(cin, zdanie);</code></li>
+  </ul>
+  <p class="links">Dokumentacja: <a href="https://en.cppreference.com/w/cpp/io/cin" target="_blank" rel="noopener">cppreference: std::cin</a> · <a href="https://en.cppreference.com/w/cpp/string/basic_string/getline" target="_blank" rel="noopener">cppreference: getline</a> · <a href="https://www.w3schools.com/cpp/cpp_user_input.asp" target="_blank" rel="noopener">w3schools: User Input</a></p>
+  <p class="note">Dalej: obliczenia na wczytanych liczbach</p>
+  <div class="row"><button class="btn" data-go="0">Wróć na początek</button></div>
+</div></section>
+
+</main>
+<nav class="ctl" aria-label="Nawigacja prezentacji">
+ <button class="navbtn" id="prev" aria-label="Poprzedni slajd">‹</button>
+ <div class="dots" id="dots"></div>
+ <span class="count" id="count"></span>
+ <button class="navbtn" id="next" aria-label="Następny slajd">›</button>
+ <button class="theme" id="theme" aria-label="Zmień motyw jasny/ciemny">◐</button>
+</nav>
+
+<script>
+(function(){
+const KEY='po-wczytywanie-cin';
+const $=id=>document.getElementById(id);
+const esc=t=>String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const slides=[...document.querySelectorAll('.slide')];
+const dots=$('dots'),count=$('count');
+let cur=0;
+slides.forEach((s,i)=>{const b=document.createElement('button');b.setAttribute('aria-label',(i+1)+'. '+s.dataset.title);b.title=s.dataset.title;b.onclick=()=>go(i);dots.appendChild(b)});
+function go(i){
+  i=Math.max(0,Math.min(slides.length-1,i));cur=i;
+  slides.forEach((s,k)=>{s.classList.toggle('active',k===i);s.classList.toggle('before',k<i);s.setAttribute('aria-hidden',k!==i)});
+  [...dots.children].forEach((d,k)=>{d.className=k===i?'cur':(k<i?'done':'')});
+  count.textContent=(i+1)+' / '+slides.length;
+  try{history.replaceState(null,'','#'+(i+1))}catch(e){}
+  try{localStorage.setItem(KEY+'-slide',i)}catch(e){}
+}
+$('prev').onclick=()=>go(cur-1);$('next').onclick=()=>go(cur+1);
+document.addEventListener('keydown',e=>{
+  if(e.target.matches('input,select'))return;
+  if(e.key==='ArrowRight'||e.key==='PageDown'||(e.key===' '&&!e.target.matches('button'))){e.preventDefault();go(cur+1)}
+  if(e.key==='ArrowLeft'||e.key==='PageUp'){e.preventDefault();go(cur-1)}
+  if(e.key==='Home')go(0);if(e.key==='End')go(slides.length-1);
+});
+let tx=null;
+document.addEventListener('touchstart',e=>{tx=e.touches[0].clientX},{passive:true});
+document.addEventListener('touchend',e=>{if(tx===null)return;const dx=e.changedTouches[0].clientX-tx;if(Math.abs(dx)>70&&!e.target.closest('.codebox,.console,.out,input,.bars'))go(cur+(dx<0?1:-1));tx=null},{passive:true});
+document.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>go(+b.dataset.go));
+const root=document.documentElement;
+$('theme').onclick=()=>{const dark=root.dataset.theme?root.dataset.theme==='dark':matchMedia('(prefers-color-scheme: dark)').matches;root.dataset.theme=dark?'light':'dark';try{localStorage.setItem('cppkurs-theme',root.dataset.theme)}catch(e){}};
+try{const t=localStorage.getItem('cppkurs-theme');if(t)root.dataset.theme=t}catch(e){}
+
+function bindExplain(boxId,outId,map){
+  const box=$(boxId),out=$(outId);
+  box.querySelectorAll('[data-ex]').forEach(b=>b.onclick=()=>{
+    box.querySelectorAll('[data-ex]').forEach(x=>x.classList.remove('on'));
+    box.querySelectorAll('[data-ex="'+b.dataset.ex+'"]').forEach(x=>x.classList.add('on'));
+    const e=map[b.dataset.ex];out.innerHTML='<h3>'+e[0]+'</h3><p>'+e[1]+'</p>';
+  });
+}
+function hlLines(boxId,set){$(boxId).querySelectorAll('.ln').forEach(l=>l.classList.toggle('on',set.includes(+l.dataset.n)))}
+function makeQuiz(el,Q){
+  let qi=0,score=0;
+  function show(){
+    if(qi>=Q.length){
+      el.innerHTML='<h2>Wynik: '+score+' / '+Q.length+'</h2><p class="lead">'+(score===Q.length?'Komplet! Możesz śmiało ruszać do kolejnego odcinka.':score>=Q.length-2?'Bardzo dobrze. Przejrzyj jeszcze slajdy z pytań, w których był błąd.':'Warto wrócić do wcześniejszych slajdów, a potem spróbować ponownie.')+'</p><div class="row"><button class="btn primary" id="qAgain">Spróbuj ponownie</button></div>';
+      $('qAgain').onclick=()=>{qi=0;score=0;show()};return;
+    }
+    const q=Q[qi];
+    el.innerHTML='<p class="qnum">Pytanie '+(qi+1)+' z '+Q.length+'</p><h2>'+esc(q[0])+'</h2>'+(q[4]?'<div class="codebox" style="max-width:640px;margin-bottom:.5em">'+q[4].split('\n').map((l,k)=>'<div class="ln" data-n="'+(k+1)+'">'+esc(l)+'</div>').join('')+'</div>':'')+'<div class="opts"></div><p class="fb" aria-live="polite"></p><div class="row"><button class="btn primary" id="qNext" hidden>'+(qi===Q.length-1?'Pokaż wynik':'Następne pytanie')+'</button></div>';
+    const o=el.querySelector('.opts'),fb=el.querySelector('.fb'),nx=$('qNext');
+    q[1].forEach((t,i)=>{const b=document.createElement('button');b.textContent=t;
+      b.onclick=()=>{[...o.children].forEach((x,k)=>{x.disabled=true;if(k===q[2])x.classList.add('right')});
+        if(i===q[2]){score++;fb.innerHTML='<b>Dobrze!</b> '+q[3]}else{b.classList.add('wrong');fb.innerHTML='<b>Nie tym razem.</b> '+q[3]}
+        nx.hidden=false;nx.focus()};o.appendChild(b)});
+    nx.onclick=()=>{qi++;show()};
+  }
+  show();
+}
+
+// pisanie w polach nie przełącza slajdów
+document.querySelectorAll('.slide').forEach(s=>s.addEventListener('keydown',e=>{if(e.target.matches('input,textarea'))e.stopPropagation();}));
+
+const kropki=t=>t.replace(/ /g,'·');
+const chipOk=ok=>ok?'<span class="chip t">✓</span>':'<span class="chip f">✗</span>';
+
+// symulacja cin >> dla różnych typów
+function czytajString(t){
+  const m=t.match(/^\s*(\S+)/);
+  if(!m)return{czeka:true};
+  return{ok:true,w:m[1],reszta:t.slice(m[0].length)};
+}
+function czytajInt(t){
+  const s=t.replace(/^\s+/,'');
+  if(!s)return{czeka:true};
+  const m=s.match(/^[+-]?\d+/);
+  if(!m)return{ok:false,w:'0',reszta:s};
+  const v=parseInt(m[0],10);
+  if(v>2147483647||v<-2147483648)return{ok:false,w:v>0?'2147483647':'-2147483648',reszta:s.slice(m[0].length),duza:true};
+  return{ok:true,w:String(v+0),reszta:s.slice(m[0].length)};
+}
+function czytajDouble(t){
+  const s=t.replace(/^\s+/,'');
+  if(!s)return{czeka:true};
+  const m=s.match(/^[+-]?(\d+\.?\d*|\.\d+)([eE][+-]?\d+)?/);
+  if(!m)return{ok:false,w:'0',reszta:s};
+  return{ok:true,w:String(parseFloat(m[0])),reszta:s.slice(m[0].length)};
+}
+
+// kierunek strzałek
+const strz=[
+  ['cout','"Podaj imie: ";','<<','cout wypisuje: dane płyną z programu na ekran.'],
+  ['cin','imie;','>>','cin wczytuje: dane płyną z klawiatury do zmiennej imie.'],
+  ['cout','"Witaj " << imie;','<<','Wypisujesz napis i wartość zmiennej, więc <<.'],
+  ['cin','wiek;','>>','Wartość z klawiatury wpada do wiek, więc >>.'],
+  ['cout','wiek + 1;','<<','Wypisujesz wynik wyrażenia na ekran, więc <<.']
+];
+const strzOdp=strz.map(()=>null);
+function rysujStrz(){
+  $('strzTbl').innerHTML='<tr><th>linia kodu</th><th></th></tr>'+strz.map((s,i)=>{
+    const o=strzOdp[i];
+    const seg='<span class="seg">'+['<<','>>'].map(z=>'<button data-i="'+i+'" data-z="'+esc(z)+'" aria-pressed="'+(o===z)+'">'+esc(z)+'</button>').join('')+'</span>';
+    return '<tr><td class="mono">'+s[0]+' '+seg+' '+esc(s[1])+'</td><td>'+(o===null?'':chipOk(o===s[2]))+'</td></tr>';
+  }).join('');
+  $('strzWynik').textContent=strzOdp.filter((o,i)=>o===strz[i][2]).length+' / '+strz.length;
+}
+$('strzTbl').onclick=e=>{
+  const b=e.target.closest('button[data-i]');if(!b)return;
+  const i=+b.dataset.i,s=strz[i];strzOdp[i]=b.dataset.z;rysujStrz();
+  $('strzOut').textContent=(b.dataset.z===s[2]?'✓ Dobrze! ':'✗ Nie. '+s[0]+' '+b.dataset.z+' się nie skompiluje. ')+s[3];
+};
+rysujStrz();
+
+// konsola — program z lekcji
+let kon={stan:'stop',ekran:''};
+function pokazKon(){$('conOut').textContent=kon.ekran;$('conOut').style.whiteSpace='pre-wrap';}
+function konStart(){
+  kon={stan:'czeka',ekran:''};
+  hlLines('konKod',[2]);
+  kon.ekran='Hello world!My dear Friend';
+  pokazKon();
+  hlLines('konKod',[3]);
+  $('konWej').disabled=false;$('konEnter').disabled=false;$('konWej').value='';
+  $('konOpis').textContent='Linia 3: program stoi na cin i czeka, aż wpiszesz tekst i naciśniesz Enter.';
+  $('konEx').innerHTML='';
+  $('konWej').focus();
+}
+function konEnter(){
+  if(kon.stan!=='czeka')return;
+  const v=$('konWej').value;
+  kon.ekran+=v+'\n';
+  const r=czytajString(v);
+  if(r.czeka){
+    pokazKon();$('konWej').value='';
+    $('konOpis').textContent='Pusta linia to same białe znaki. cin dalej czeka na słowo.';
+    return;
+  }
+  kon.stan='koniec';
+  kon.ekran+='Hello world!My dear Friend'+r.w+'\n\nProcess returned 0 (0x0)';
+  pokazKon();
+  hlLines('konKod',[4,5]);
+  $('konWej').disabled=true;$('konEnter').disabled=true;
+  $('konOpis').textContent='Do zmiennej napis trafiło: '+r.w;
+  let h='<p><b>Co widać w konsoli?</b></p><p>1. „Hello world!My dear Friend” jest sklejone: w napisach nie ma spacji, a <code>&lt;&lt;</code> jej nie doda.</p>'+
+    '<p>2. Wartość napisu wypisała się tuż za tekstem, bo w kodzie nie ma <code>endl</code>.</p>'+
+    '<p>3. Twój tekst przeszedł do nowej linii, bo nacisnąłeś Enter.</p>';
+  if(r.reszta.trim())h+='<p class="note">„'+esc(r.reszta.trim())+'” zostało w buforze: spacja zakończyła wczytywanie.</p>';
+  $('konEx').innerHTML=h;
+}
+$('konStart').onclick=konStart;
+$('konEnter').onclick=konEnter;
+$('konWej').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();konEnter();}});
+$('konOpis').textContent='Kliknij „Uruchom”.';
+
+// co trafi do zmiennej
+const traf=[
+  ['string s; cin >> s;','Kot Filemon','Kot','Spacja kończy wczytywanie. Filemon zostaje w buforze.'],
+  ['string s; cin >> s;','   Filemon','Filemon','Spacje na początku cin pomija.'],
+  ['int x; cin >> x;','16 lat','16','Spacja kończy liczbę, „lat” czeka w buforze.'],
+  ['int x; cin >> x;','007','7','Zera z przodu nic nie zmieniają: to liczba 7.'],
+  ['int x; cin >> x;','4.9','4','Kropka nie pasuje do int, więc cin bierze tylko 4. Nie ma zaokrąglania.'],
+  ['int x; cin >> x;','abc','0','Litery nie pasują do int: wczytanie się nie udaje, x dostaje 0, a cin przestaje działać.']
+];
+function rysujTraf(){
+  $('trafTbl').innerHTML='<tr><th>kod</th><th>wpisano</th><th>w zmiennej</th><th></th></tr>'+traf.map((t,i)=>'<tr><td class="mono">'+esc(t[0])+'</td><td class="mono">'+esc(kropki(t[1]))+'</td><td><input type="text" class="mono" id="traf'+i+'" style="width:6em"></td><td id="trafZ'+i+'"></td></tr>').join('');
+  $('trafWynik').textContent='? / '+traf.length;
+}
+function sprawdzTraf(){
+  let dobre=0;const uw=[];
+  traf.forEach((t,i)=>{
+    const v=$('traf'+i).value.trim();const ok=v===t[2];if(ok)dobre++;
+    $('trafZ'+i).innerHTML=chipOk(ok);
+    if(!ok)uw.push('<p>'+esc(kropki(t[1]))+' → <b>'+esc(t[2])+'</b>. '+t[3]+'</p>');
+  });
+  $('trafWynik').textContent=dobre+' / '+traf.length;
+  $('trafEx').innerHTML=uw.length?uw.join(''):'<p>✓ Wszystko dobrze! Wiesz, gdzie cin kończy wczytywanie.</p>';
+}
+$('trafSpr').onclick=sprawdzTraf;
+$('trafPokaz').onclick=()=>{traf.forEach((t,i)=>$('traf'+i).value=t[2]);sprawdzTraf();};
+$('trafReset').onclick=()=>{rysujTraf();$('trafEx').innerHTML='<p class="note">spacja kończy wczytywanie</p>';};
+rysujTraf();
+
+function opisCzyt(r){
+  if(r.czeka)return'(cin czeka dalej — same białe znaki)';
+  const bufor=r.reszta?kropki(r.reszta):'nic';
+  return r.w+(r.ok?'':(r.duza?'  ← za duża liczba, błąd wczytania':'  ← błąd wczytania'))+'   | w buforze: '+bufor;
+}
+function upLab(){
+  const t=$('lab').value;
+  $('labOut').textContent='string s → '+opisCzyt(czytajString(t))+'\nint x    → '+opisCzyt(czytajInt(t))+'\ndouble d → '+opisCzyt(czytajDouble(t));
+  $('labOut').style.whiteSpace='pre-wrap';
+}
+$('lab').oninput=upLab;upLab();
+
+// dwie liczby krok po kroku
+let dk=-1,dwaStan=null;
+function dwaPrzelicz(){
+  const t=$('dwaWej').value;
+  const ra=czytajInt(t);
+  if(ra.czeka||!ra.ok)return{blad:'Pierwsza wartość to nie liczba całkowita. cin zgłosi błąd wczytania.'};
+  const rb=czytajInt(ra.reszta);
+  if(rb.czeka)return{blad:'Jest tylko jedna liczba. Prawdziwy program czekałby na drugą — wpisz dwie liczby.'};
+  if(!rb.ok)return{blad:'Druga wartość to nie liczba całkowita. cin zgłosi błąd wczytania.'};
+  if(!ra.ok||ra.duza||rb.duza)return{blad:'Za duża liczba dla int.'};
+  return{a:+ra.w,b:+rb.w,reszta:rb.reszta,wej:t};
+}
+function dwaRysuj(){
+  const linie=[[1],[2],[3],[4],[5]];
+  hlLines('dwaKod',dk<0?[]:linie[dk]);
+  const s=dwaStan;let ekran='',a='—',b='—',buf='(pusty)',opis='Kliknij „Następny krok”.';
+  if(dk>=0){a='?';b='?';opis='Powstają zmienne a i b. Mają przypadkowe wartości.';}
+  if(dk>=1){ekran='Podaj dwie liczby: ';opis='Komunikat na ekranie. Kursor stoi za spacją.';}
+  if(dk>=2){
+    if(s.blad){opis=s.blad;ekran+=s.wej||$('dwaWej').value;}
+    else{ekran+=s.wej+'\n';a=s.a;b=s.b;buf=kropki(s.reszta)+'⏎';
+      opis='cin bierze pierwszą liczbę do a, drugą do b. W buforze zostaje Enter (⏎)'+(s.reszta.trim()?' i nadmiarowy tekst.':'.');}
+  }
+  if(dk>=3&&!s.blad){ekran+='Suma: '+(s.a+s.b)+'\n';opis='a + b = '+s.a+' + '+s.b+' = '+(s.a+s.b);}
+  if(dk>=4&&!s.blad){ekran+='Iloczyn: '+(s.a*s.b)+'\n';opis='a * b = '+s.a+' * '+s.b+' = '+(s.a*s.b)+'. Koniec programu.';}
+  $('dwaA').textContent=a;$('dwaB').textContent=b;$('dwaBuf').textContent=buf;
+  $('dwaEkran').textContent=ekran||'(ekran pusty)';$('dwaEkran').style.whiteSpace='pre-wrap';
+  $('dwaOpis').textContent=opis;
+  $('dwaDalej').disabled=dk>=4||(dk>=2&&!!(s&&s.blad));
+}
+$('dwaDalej').onclick=()=>{if(dk<0)dwaStan=dwaPrzelicz();if(dk<4)dk++;dwaRysuj();};
+$('dwaReset').onclick=()=>{dk=-1;dwaStan=null;dwaRysuj();};
+$('dwaWej').oninput=()=>{dk=-1;dwaStan=null;dwaRysuj();};
+dwaRysuj();
+
+// znajdź błędy
+const bledy={
+  7:'<code>cin &lt;&lt; imie</code>: przy <code>cin</code> strzałki <code>&gt;&gt;</code>, bo dane płyną do zmiennej.',
+  8:'<code>cout &gt;&gt;</code>: przy <code>cout</code> strzałki <code>&lt;&lt;</code>, bo dane płyną na ekran.',
+  9:'Zmienna <code>wiek</code> nie jest zadeklarowana. Wyżej brakuje <code>int wiek;</code>.'
+};
+const zazn=new Set();
+const linieBledy=()=>[...document.querySelectorAll('#bledy .ln')];
+function licznik(){$('bledyWynik').textContent=zazn.size+' zaznaczonych';}
+linieBledy().forEach(l=>l.addEventListener('click',()=>{
+  const n=+l.dataset.n;if(zazn.has(n))zazn.delete(n);else zazn.add(n);
+  l.classList.toggle('on',zazn.has(n));l.style.background='';licznik();
+}));
+$('bledySpr').onclick=()=>{
+  const wszystkie=Object.keys(bledy).map(Number);
+  const trafione=wszystkie.filter(n=>zazn.has(n)),pud=[...zazn].filter(n=>!bledy[n]);
+  linieBledy().forEach(l=>{const n=+l.dataset.n;
+    l.style.background=bledy[n]&&zazn.has(n)?'rgba(46,160,67,.22)':bledy[n]?'rgba(240,170,0,.28)':zazn.has(n)?'rgba(220,50,50,.2)':'';});
+  let h='<p><b>Trafione: '+trafione.length+' z '+wszystkie.length+'</b>'+(pud.length?' · bez błędu, a zaznaczone: linia '+pud.join(', '):'')+'</p>';
+  if(trafione.length===wszystkie.length&&!pud.length)h+='<p>✓ Świetnie, wszystkie błędy znalezione!</p>';
+  h+=wszystkie.map(n=>'<p>'+(zazn.has(n)?'✓':'✗')+' linia '+n+': '+bledy[n]+'</p>').join('');
+  $('bledyEx').innerHTML=h;
+  $('bledyWynik').textContent=trafione.length+' / '+wszystkie.length;
+};
+$('bledyReset').onclick=()=>{zazn.clear();linieBledy().forEach(l=>{l.classList.remove('on');l.style.background='';});licznik();
+  $('bledyEx').innerHTML='<p class="note">Patrz na strzałki i deklaracje.</p>';};
+
+// ułóż program
+const uk={
+  A:'string imie;',
+  B:'int wiek;',
+  C:'cout << "Podaj imie: ";',
+  D:'cin >> imie;',
+  E:'cout << "Ile masz lat? ";',
+  F:'cin >> wiek;',
+  G:'cout << imie << " za rok: " << wiek + 1 << endl;'
+};
+const ukStart=['D','G','B','E','A','F','C'];
+let ukProg=[];
+function rysujUk(){
+  $('ukPula').innerHTML=ukStart.filter(id=>!ukProg.includes(id)).map(id=>'<button class="ln" data-id="'+id+'">'+esc(uk[id])+'</button>').join('')||'<div class="ln">(wszystkie linie użyte)</div>';
+  $('ukProg').innerHTML=ukProg.map((id,i)=>'<button class="ln" data-n="'+(i+1)+'" data-id="'+id+'">'+esc(uk[id])+'</button>').join('')||'<div class="ln">(pusto — klikaj linie po lewej)</div>';
+}
+$('ukPula').onclick=e=>{const b=e.target.closest('button[data-id]');if(!b)return;ukProg.push(b.dataset.id);rysujUk();};
+$('ukProg').onclick=e=>{const b=e.target.closest('button[data-id]');if(!b)return;ukProg=ukProg.filter(id=>id!==b.dataset.id);rysujUk();};
+function sprawdzUk(){
+  if(ukProg.length<7){$('ukOut').textContent='Brakuje '+(7-ukProg.length)+' linii. Użyj wszystkich.';return;}
+  const p=id=>ukProg.indexOf(id);
+  const uw=[];
+  if(p('A')>p('D')||p('A')>p('G'))uw.push('Zmienną imie zadeklaruj, zanim coś do niej wczytasz albo ją wypiszesz.');
+  if(p('B')>p('F')||p('B')>p('G'))uw.push('Zmienną wiek zadeklaruj, zanim coś do niej wczytasz albo ją wypiszesz.');
+  if(p('C')!==p('D')-1)uw.push('Komunikat „Podaj imie” ma stać tuż przed cin >> imie.');
+  if(p('E')!==p('F')-1)uw.push('Komunikat „Ile masz lat?” ma stać tuż przed cin >> wiek.');
+  if(p('G')!==6)uw.push('Wynik wypisz na końcu, gdy imię i wiek są już wczytane.');
+  if(uw.length){$('ukOut').textContent='✗ '+uw.join('\n✗ ');$('ukOut').style.whiteSpace='pre-wrap';return;}
+  let ekran='✓ Program działa! Przykładowe uruchomienie:\n\n';
+  ukProg.forEach(id=>{
+    if(id==='C')ekran+='Podaj imie: ';if(id==='D')ekran+='Filemon\n';
+    if(id==='E')ekran+='Ile masz lat? ';if(id==='F')ekran+='15\n';
+    if(id==='G')ekran+='Filemon za rok: 16\n';
+  });
+  $('ukOut').textContent=ekran;$('ukOut').style.whiteSpace='pre-wrap';
+}
+$('ukSpr').onclick=sprawdzUk;
+$('ukPokaz').onclick=()=>{ukProg=['A','B','C','D','E','F','G'];rysujUk();sprawdzUk();};
+$('ukReset').onclick=()=>{ukProg=[];rysujUk();$('ukOut').textContent='Ułóż wszystkie 7 linii.';};
+rysujUk();
+
+makeQuiz($('quiz'),[
+ ['Który zapis wczytuje wartość z klawiatury do zmiennej x?',['cin << x;','cin >> x;','cout >> x;','cin >> "x";'],1,'Przy cin strzałki >> wskazują zmienną, do której wpadają dane.'],
+ ['Wpisano: Kot Filemon. Co trafi do s?',['Kot Filemon','Filemon','nic','Kot'],3,'cin >> kończy wczytywanie na spacji. Słowo Filemon zostaje w buforze.','string s;\ncin >> s;'],
+ ['Kiedy program przechodzi dalej po cin >> x; ?',['od razu','po wpisaniu jednego znaku','po naciśnięciu Enter','po 5 sekundach'],2,'Program czeka, aż użytkownik zatwierdzi dane Enterem.'],
+ ['Wpisano: 4 9. Co wypisze program?',['49','13','36','4 9'],2,'a = 4, b = 9, a a * b to wyrażenie: 4 * 9 = 36.','int a, b;\ncin >> a >> b;\ncout << a * b;'],
+ ['Wpisano: 16 lat. Co trafi do zmiennej wiek?',['16','16 lat','0','błąd kompilacji'],0,'cin czyta cyfry, dopóki pasują do int. Spacja kończy liczbę.','int wiek;\ncin >> wiek;'],
+ ['Jak wczytać całą linię tekstu razem ze spacjami?',['cin >> linia;','getline(cin, linia);','cout << linia;','cin.ignore();'],1,'getline wczytuje do zmiennej string wszystko aż do Enter.'],
+ ['Po co komunikat przed cin >> wiek; ?',['żeby wczytać wiek','bez niego cin nie działa','żeby wypisać wiek','żeby użytkownik wiedział, co wpisać'],3,'cin działa i bez komunikatu, ale użytkownik widzi wtedy tylko migający kursor.','cout << "Podaj wiek: ";\ncin >> wiek;'],
+ ['Wpisano Filemon. Co pojawi się na ekranie?',['Witaj Filemon','WitajFilemon','Witaj imie','Witajimie'],1,'cout nie dodaje spacji sam. Napis musi kończyć się spacją: "Witaj ".','string imie;\ncin >> imie;\ncout << "Witaj" << imie;']
+]);
+
+let start=0;const h=parseInt(location.hash.slice(1));
+if(h>0)start=h-1;else{try{const s=localStorage.getItem(KEY+'-slide');if(s)start=+s}catch(e){}}
+go(start);
+
+})();
+</script>
+<!-- materialy.py: poprawki nawigacji prezentacji (ankieta uczniów 10.2026), wklejane przed </body> po build.py skilla -->
+<style>
+.dots button,.dots button.done,.dots button.cur{height:28px;padding:10px 0;background-clip:content-box}
+.dots button.cur{padding:8px 0}
+.navbtn{width:52px;height:52px;font-size:1.5rem}
+textarea,input,code,pre,.codebox{font-variant-ligatures:none}
+.navhint{font-family:var(--mono);font-size:.8rem;color:var(--ink-soft);white-space:nowrap}
+.navhint[hidden]{display:none}
+@media (max-width:560px){.navhint{display:none}}
+.quiz .opts{counter-reset:opt}
+.quiz .opts button{counter-increment:opt;display:flex;align-items:baseline;gap:.6em;white-space:pre-wrap}
+.quiz h2{white-space:pre-wrap}
+.quiz .opts button::before{content:counter(opt);flex:none;display:inline-grid;place-items:center;width:1.7em;height:1.7em;border:2px solid currentColor;font-family:var(--mono);font-size:.85em;font-weight:600}
+.quiz .qnum::after{content:" · odpowiedź: klawisz 1–4, dalej: Enter";color:var(--ink-soft);font-size:.85em}
+@media (hover:none){.quiz .qnum::after{content:none}}
+</style>
+<script>
+(function () {
+  var next = document.getElementById("next"), prev = document.getElementById("prev"), nav = document.querySelector("nav.ctl");
+  if (!next || !prev || !nav) return;
+  var hint = document.createElement("span");
+  hint.className = "navhint";
+  hint.hidden = true;
+  hint.textContent = "Esc — wróć do slajdów";
+  nav.insertBefore(hint, document.getElementById("count"));
+  function field(t) { return !!t && (t.isContentEditable || (t.matches && t.matches("input,select,textarea"))); }
+  function stop(e) { e.stopPropagation(); }
+  // Klawisz w polu do pisania nie może dojść do nawigacji skilla (ona pomija tylko input/select, więc spacja
+  // w <textarea> przełączała slajd). Faza przechwytywania: Esc oddaje klawiaturę slajdom, PageDown/PageUp
+  // i Alt+strzałki przełączają z pola; resztę zatrzymuje jednorazowy słuchacz na samym polu — po obsłudze
+  // przez stronę, przed nawigacją na document.
+  document.addEventListener("keydown", function (e) {
+    var t = e.target;
+    if (!field(t)) return;
+    if (e.key === "Escape") { e.preventDefault(); t.blur(); }
+    else if (e.key === "PageDown" || (e.altKey && e.key === "ArrowRight")) { e.preventDefault(); t.blur(); next.click(); }
+    else if (e.key === "PageUp" || (e.altKey && e.key === "ArrowLeft")) { e.preventDefault(); t.blur(); prev.click(); }
+    else t.addEventListener("keydown", stop, {once: true});
+  }, true);
+  // Enter przełącza dalej, gdy fokus nie stoi na niczym klikalnym (przycisk, link, rozwijane) ani w polu.
+  document.addEventListener("keydown", function (e) {
+    var t = e.target;
+    if (e.key === "Enter" && !e.defaultPrevented && !field(t) && !(t.closest && t.closest("button,a,summary,label,[tabindex]"))) {
+      e.preventDefault(); next.click();
+    }
+  });
+  // Quiz skilla: cyfra wybiera odpowiedź na aktywnym slajdzie (Enter potem klika „Następne pytanie”, które ma fokus).
+  document.addEventListener("keydown", function (e) {
+    if (e.altKey || e.ctrlKey || e.metaKey || !/^[1-9]$/.test(e.key) || field(e.target)) return;
+    var opts = document.querySelector(".slide.active .quiz .opts");
+    var b = opts && opts.querySelectorAll("button")[+e.key - 1];
+    if (b && !b.disabled) { e.preventDefault(); b.click(); }
+  });
+  // Po wyborze z listy, pola wyboru albo suwaka (myszką) klawiatura wraca do slajdów.
+  document.addEventListener("change", function (e) {
+    if (e.target.matches("select,input[type=checkbox],input[type=radio]")) e.target.blur();
+  });
+  document.addEventListener("pointerup", function (e) {
+    if (e.target.matches && e.target.matches("input[type=range]")) setTimeout(function () { e.target.blur(); }, 0);
+  });
+  document.addEventListener("focusin", function (e) {
+    hint.hidden = !(field(e.target) && !(e.target.matches && e.target.matches("input[type=range],input[type=checkbox],input[type=radio]")));
+  });
+  document.addEventListener("focusout", function () { hint.hidden = true; });
+})();
+</script>
+</body>
+</html>

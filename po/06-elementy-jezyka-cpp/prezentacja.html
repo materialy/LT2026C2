@@ -1,0 +1,827 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="materialy" content="strona-grupy">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'self' 'unsafe-inline' file:; font-src 'self' file:; img-src 'self' data: file:; frame-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'">
+<meta name="robots" content="noindex, nofollow">
+<link rel="stylesheet" href="../../assets/fonty.css">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Podstawowe elementy języka C++</title>
+<style>
+
+:root{
+  --paper:#FBFCFF; --grid:#DCE6F5; --ink:#1D2A5C; --ink-soft:#4A5785;
+  --margin:#D9433B; --marker:#FFE45C; --code-bg:#EEF2FA; --line:#C5D3EA;
+  --ok:#1F8A5B; --bad:#C2372F; --panel:#FFFFFF;
+  --sans:"Bricolage Grotesque", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --mono:"JetBrains Mono", Consolas, "Courier New", monospace;
+  --hand:"Caveat", "Comic Sans MS", cursive;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#131A2E; --grid:#1F2945; --ink:#E3E8F7; --ink-soft:#A3AECF;
+    --margin:#F06A5F; --marker:#E8C93A; --code-bg:#1B2440; --line:#2E3A5E;
+    --ok:#4CC98E; --bad:#F07A70; --panel:#18203A;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#131A2E; --grid:#1F2945; --ink:#E3E8F7; --ink-soft:#A3AECF;
+  --margin:#F06A5F; --marker:#E8C93A; --code-bg:#1B2440; --line:#2E3A5E;
+  --ok:#4CC98E; --bad:#F07A70; --panel:#18203A;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{height:100%;scroll-padding-top:env(safe-area-inset-top,0px)}
+body{
+  height:100%;margin:0;color:var(--ink);font-family:var(--sans);
+  background-color:var(--paper);
+  background-image:
+    linear-gradient(var(--grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size:24px 24px;
+  overflow:hidden;
+}
+/* czerwony margines zeszytu */
+body::before{content:"";position:fixed;top:0;bottom:0;left:clamp(18px,5vw,64px);width:2px;background:var(--margin);opacity:.7;z-index:0}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:3px solid var(--margin);outline-offset:2px}
+
+.deck{position:relative;height:100%;z-index:1}
+.slide{
+  position:absolute;inset:0 0 72px 0;overflow-y:auto;
+  padding:clamp(20px,5vh,56px) clamp(20px,5vw,72px) 24px calc(clamp(18px,5vw,64px) + clamp(20px,4vw,48px));
+  opacity:0;visibility:hidden;transform:translateX(24px);
+  transition:opacity .35s ease, transform .35s ease, visibility 0s .35s;
+}
+.slide.active{opacity:1;visibility:visible;transform:none;transition:opacity .35s ease, transform .35s ease}
+.slide.before{transform:translateX(-24px)}
+.inner{max-width:1080px}
+h1,h2{font-weight:800;letter-spacing:-.02em;line-height:1.05;margin:0 0 .5em}
+h1{font-size:clamp(2.4rem,7vw,5.2rem)}
+h2{font-size:clamp(1.8rem,4.2vw,3rem)}
+p,li{font-size:clamp(1rem,1.6vw,1.2rem);line-height:1.55;max-width:68ch}
+.lead{font-size:clamp(1.1rem,2vw,1.45rem);color:var(--ink-soft)}
+.note{font-family:var(--hand);font-size:clamp(1.4rem,2.4vw,1.9rem);color:var(--margin);line-height:1.15;transform:rotate(-1.5deg);display:inline-block}
+mark{background:linear-gradient(transparent 45%, var(--marker) 45%, var(--marker) 90%, transparent 90%);color:inherit;padding:0 .1em}
+code,.mono{font-family:var(--mono);font-size:.92em}
+.k{color:#7A3FC2}.s{color:#1F8A5B}.n{color:#C2372F}.p{color:#2563C9}.c{color:var(--ink-soft);font-style:italic}
+:root[data-theme="dark"] .k{color:#C29BFF} :root[data-theme="dark"] .s{color:#6FD8A2} :root[data-theme="dark"] .n{color:#FF8E86} :root[data-theme="dark"] .p{color:#7FB0FF}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .k{color:#C29BFF}:root:not([data-theme="light"]) .s{color:#6FD8A2}:root:not([data-theme="light"]) .n{color:#FF8E86}:root:not([data-theme="light"]) .p{color:#7FB0FF}}
+
+/* tytuł */
+.title-code{font-family:var(--mono);font-size:clamp(1rem,2.2vw,1.5rem);background:var(--code-bg);border:2px solid var(--ink);padding:.9em 1.1em;display:inline-block;margin:1.2em 0;box-shadow:6px 6px 0 var(--ink)}
+.cursor{display:inline-block;width:.6em;height:1.1em;background:var(--ink);vertical-align:-.15em;animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+.meta{color:var(--ink-soft);font-size:1rem}
+.meta a{color:inherit}
+
+/* agenda */
+.agenda{list-style:none;padding:0;margin:0;display:grid;gap:2px;max-width:760px}
+.agenda li{max-width:none}
+.agenda button{width:100%;display:grid;grid-template-columns:5.5em 1fr;gap:1em;text-align:left;background:transparent;border:0;border-bottom:1px dashed var(--line);padding:.6em .2em;font-size:clamp(1rem,1.6vw,1.15rem)}
+.agenda button:hover{background:var(--code-bg)}
+.agenda .t{font-family:var(--mono);color:var(--margin)}
+
+/* dwie kolumny */
+.two{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:clamp(20px,4vw,48px);align-items:start}
+@media (max-width:820px){.two{grid-template-columns:1fr}}
+
+/* drzewo plików */
+.tree{font-family:var(--mono);font-size:clamp(.9rem,1.4vw,1.05rem);background:var(--panel);border:2px solid var(--ink);padding:1em;box-shadow:6px 6px 0 var(--ink)}
+.tree button{display:block;width:100%;text-align:left;background:none;border:0;padding:.35em .5em;border-radius:3px;font-family:var(--mono);font-size:inherit}
+.tree button:hover{background:var(--code-bg)}
+.tree button[aria-pressed="true"]{background:var(--marker);color:#1D2A5C}
+.tree .dir{padding:.35em .5em;color:var(--ink-soft)}
+.tree .ind1{padding-left:1.6em}.tree .ind2{padding-left:3.2em}
+.explain{border-left:4px solid var(--margin);padding:.4em 0 .4em 1em;min-height:9em}
+.explain h3{margin:0 0 .3em;font-size:1.4rem;font-family:var(--mono)}
+.tag{display:inline-block;font-size:.85rem;border:1.5px solid currentColor;padding:.05em .55em;border-radius:99px;margin-bottom:.6em}
+
+/* kod klikalny */
+.codebox{background:var(--code-bg);border:2px solid var(--ink);font-family:var(--mono);font-size:clamp(.85rem,1.45vw,1.05rem);overflow-x:auto;box-shadow:6px 6px 0 var(--ink)}
+.codebox .ln{display:flex;width:100%;background:none;border:0;text-align:left;padding:.28em .8em;font-family:var(--mono);font-size:inherit;white-space:pre}
+.codebox .ln::before{content:attr(data-n);width:2em;flex:none;color:var(--ink-soft);opacity:.6}
+.codebox button.ln:hover{background:var(--grid)}
+.codebox .ln.on{background:var(--marker);color:#1D2A5C}
+.codebox .ln.on span{color:#1D2A5C}
+.codebox div.ln{cursor:default}
+
+/* strumienie */
+.streams{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:1em;margin:1.5em 0;max-width:820px}
+.box{border:2px solid var(--ink);background:var(--panel);padding:1em;text-align:center;font-weight:600;min-height:5.5em;display:flex;flex-direction:column;justify-content:center;gap:.3em}
+.box small{font-weight:400;color:var(--ink-soft)}
+.arrow{font-family:var(--mono);font-size:clamp(1.6rem,4vw,2.6rem);font-weight:600;text-align:center;color:var(--margin);min-width:3.5em;position:relative}
+.packet{position:absolute;top:-1.2em;left:50%;font-size:.9rem;background:var(--marker);color:#1D2A5C;padding:.1em .5em;transform:translateX(-50%);white-space:nowrap;opacity:0}
+.packet.go-right{animation:goR 1.1s ease forwards}
+.packet.go-left{animation:goL 1.1s ease forwards}
+@keyframes goR{0%{opacity:0;transform:translateX(-160%)}20%{opacity:1}100%{opacity:0;transform:translateX(60%)}}
+@keyframes goL{0%{opacity:0;transform:translateX(60%)}20%{opacity:1}100%{opacity:0;transform:translateX(-160%)}}
+.seg{display:inline-flex;border:2px solid var(--ink);margin-bottom:.5em}
+.seg button{background:transparent;border:0;padding:.5em 1em;font-weight:600}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
+
+/* RAM */
+.ram{display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:6px;max-width:560px;margin:1em 0}
+.cell{border:1.5px solid var(--line);background:var(--panel);aspect-ratio:1.4;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:var(--mono);font-size:.78rem;color:var(--ink-soft);transition:background .3s,border-color .3s}
+.cell b{font-size:1.25rem;color:var(--ink)}
+.cell.used{border:2px solid var(--margin);background:var(--code-bg)}
+.cell.used .nm{color:var(--margin);font-weight:600}
+.btn{border:2px solid var(--ink);background:var(--panel);padding:.55em 1.1em;font-weight:600;box-shadow:3px 3px 0 var(--ink);transition:transform .1s, box-shadow .1s}
+.btn:active{transform:translate(3px,3px);box-shadow:0 0 0 var(--ink)}
+.btn.primary{background:var(--ink);color:var(--paper)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.row{display:flex;flex-wrap:wrap;gap:.6em;align-items:center;margin:.6em 0}
+input[type=number],input[type=text]{font-family:var(--mono);font-size:1rem;border:2px solid var(--ink);background:var(--panel);color:var(--ink);padding:.45em .6em;width:7em}
+.log{font-family:var(--mono);font-size:.95rem;min-height:1.5em;color:var(--ink-soft)}
+
+/* dzielenie */
+.divrow{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1em;margin-top:1em;max-width:560px}
+.res{border:2px dashed var(--line);padding:.8em;font-family:var(--mono)}
+.res .big{font-size:1.8rem;font-weight:600;color:var(--ink)}
+
+/* przypisanie stepper */
+.assign{font-family:var(--mono);font-size:clamp(1rem,1.8vw,1.25rem)}
+.assign .st{padding:.35em .6em;border-left:4px solid transparent}
+.assign .st.on{border-left-color:var(--margin);background:var(--code-bg)}
+.xbox{display:inline-flex;flex-direction:column;align-items:center;border:2px solid var(--margin);padding:.6em 1.4em;font-family:var(--mono);margin-top:1em}
+.xbox b{font-size:2.4rem}
+
+/* plan programu */
+.flow{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0;max-width:960px;margin:1.5em 0;counter-reset:f}
+@media (max-width:700px){.flow{grid-template-columns:1fr}}
+.flow > div{border:2px solid var(--ink);margin:-1px;padding:1.2em;background:var(--panel);position:relative}
+.flow h3{margin:0 0 .3em;font-size:1.3rem}
+.flow h3::before{counter-increment:f;content:counter(f) ". ";color:var(--margin)}
+.flow code{display:block;margin-top:.6em;background:var(--code-bg);padding:.4em .6em}
+
+/* konsola */
+.console{background:#0E1430;color:#D8E0FF;font-family:var(--mono);font-size:clamp(.85rem,1.4vw,1rem);padding:1em;min-height:12em;border:2px solid var(--ink);box-shadow:6px 6px 0 var(--ink);white-space:pre-wrap;word-break:break-word}
+.console .bar{display:flex;gap:6px;margin:-.4em 0 .8em}
+.console .bar i{width:10px;height:10px;border-radius:50%;background:#3A4570;display:block}
+.console input{background:transparent;border:0;border-bottom:1px solid #D8E0FF;color:#FFE45C;font-family:var(--mono);font-size:inherit;width:6em;padding:0}
+.console .ret{color:#7FA0E0}
+
+/* quiz */
+.quiz{max-width:760px}
+.qnum{font-family:var(--mono);color:var(--margin)}
+.opts{display:grid;gap:.5em;margin:1em 0}
+.opts button{text-align:left;border:2px solid var(--ink);background:var(--panel);padding:.75em 1em;font-size:clamp(1rem,1.5vw,1.1rem)}
+.opts button:hover:not(:disabled){background:var(--code-bg)}
+.opts button.right{background:var(--ok);color:#fff;border-color:var(--ok)}
+.opts button.wrong{background:var(--bad);color:#fff;border-color:var(--bad)}
+.opts button:disabled{cursor:default}
+.fb{min-height:3em}
+
+/* podsumowanie */
+.check{list-style:none;padding:0;columns:2 280px;column-gap:2.5em;max-width:900px}
+.check li{break-inside:avoid;padding:.35em 0 .35em 1.8em;position:relative;max-width:none}
+.check li::before{content:"✓";position:absolute;left:0;color:var(--margin);font-weight:800}
+.links a{color:var(--ink);font-weight:600}
+
+/* nawigacja */
+nav.ctl{position:fixed;left:0;right:0;bottom:0;z-index:5;height:calc(72px + env(safe-area-inset-bottom,0px));padding:0 clamp(12px,3vw,32px) env(safe-area-inset-bottom,0px);display:flex;align-items:center;gap:12px;background:color-mix(in srgb, var(--paper) 88%, transparent);backdrop-filter:blur(6px);border-top:2px solid var(--ink)}
+.dots{flex:1;display:flex;gap:4px;align-items:center;overflow-x:auto;padding:6px 2px}
+.dots button{flex:1;min-width:14px;height:8px;border:0;background:var(--line);padding:0}
+.dots button.done{background:var(--ink-soft)}
+.dots button.cur{background:var(--margin);height:12px}
+.navbtn{width:44px;height:44px;border:2px solid var(--ink);background:var(--panel);font-size:1.2rem;font-weight:800;display:grid;place-items:center}
+.count{font-family:var(--mono);font-size:.9rem;min-width:4.2em;text-align:center}
+.theme{width:44px;height:44px;border:2px solid var(--ink);background:var(--panel)}
+@media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
+
+.flowc{display:grid;gap:12px;max-width:540px;justify-items:center;margin:1em 0}
+.dec{border:2px solid var(--ink);background:var(--panel);padding:.8em 1.4em;font-family:var(--mono);font-weight:600;border-radius:40px}
+.branches{display:grid;grid-template-columns:1fr 1fr;gap:12px;width:100%}
+.br{border:2px solid var(--line);padding:.8em;text-align:center;background:var(--panel);transition:background .3s,border-color .3s}
+.br b{display:block;font-family:var(--mono);color:var(--margin)}
+.br.on{border-color:var(--margin);background:var(--marker);color:#1D2A5C}
+.br.on b{color:#1D2A5C}
+.tbl{border-collapse:collapse;font-family:var(--mono);font-size:clamp(.9rem,1.4vw,1.05rem)}
+.tbl td,.tbl th{border:1.5px solid var(--line);padding:.45em .9em;text-align:left;background:var(--panel)}
+.tbl th{font-family:var(--sans)}
+.chip{display:inline-block;padding:.1em .7em;border-radius:99px;font-weight:600;color:#fff;font-family:var(--mono)}
+.chip.t{background:var(--ok)}.chip.f{background:var(--bad)}
+.tog{display:inline-flex;align-items:center;gap:.5em;border:2px solid var(--ink);background:var(--panel);padding:.45em .9em;font-weight:600}
+.tog[aria-pressed="true"]{background:var(--ok);color:#fff;border-color:var(--ok)}
+.tog[aria-pressed="false"]{background:var(--bad);color:#fff;border-color:var(--bad)}
+.bars{display:flex;align-items:flex-end;gap:10px;height:200px;max-width:560px;border-bottom:2px solid var(--ink);margin:2em 0 .3em}
+.bars div{flex:1;background:var(--ink);position:relative;transition:height .4s;min-height:2px}
+.bars div span{position:absolute;top:-1.5em;left:0;right:0;text-align:center;font-family:var(--mono);font-size:.8rem;color:var(--ink)}
+.blabels{display:flex;gap:10px;max-width:560px;font-family:var(--mono)}
+.blabels span{flex:1;text-align:center}
+.out{font-family:var(--mono);background:#0E1430;color:#D8E0FF;padding:.8em 1em;border:2px solid var(--ink);white-space:pre-wrap;word-break:break-word;min-height:3em;max-height:14em;overflow:auto;font-size:clamp(.85rem,1.4vw,1rem)}
+.out .warn{color:#FF8E86}
+select{font:inherit;border:2px solid var(--ink);background:var(--panel);color:var(--ink);padding:.4em}
+input[type=range]{width:100%;max-width:420px;accent-color:var(--margin)}
+.part{background:none;border:0;border-bottom:3px solid var(--margin);font-family:var(--mono);font-size:inherit;padding:0 .15em;color:inherit;cursor:pointer}
+.part:hover{background:var(--grid)}
+.part.on{background:var(--marker);color:#1D2A5C}
+.part.on span{color:#1D2A5C}
+.big-num{font-family:var(--mono);font-size:clamp(2rem,6vw,4rem);font-weight:600;letter-spacing:-.02em}
+.trace{max-height:16em;overflow:auto}
+.trace .tbl td{padding:.3em .7em}
+.trace tr.now td{background:var(--marker);color:#1D2A5C}
+.pane h3{margin:.2em 0 .5em}
+label.inl{display:inline-flex;align-items:center;gap:.4em}
+
+/* ===== Układ pełnoekranowy (rzutnik, tablica) ===== */
+.inner{max-width:min(1800px,100%)}
+.lead{max-width:95ch}
+.two{grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:clamp(20px,3vw,60px)}
+@media (max-width:820px){.two{grid-template-columns:1fr}}
+/* elementy, które miały sztywną maks. szerokość, rozciągają się na całą kolumnę */
+.inner [style*="max-width"]{max-width:none!important}
+.ram,.bars,.blabels,.check,.flow,.divrow,.streams{max-width:none}
+.agenda,.quiz{max-width:1200px}
+/* linie kodu: zawijanie zamiast przewijania, numer linii w stałej kolumnie, zachowane spacje */
+.codebox{overflow-x:visible}
+.codebox .ln{display:block;position:relative;width:100%;padding:.28em .8em .28em 3em;white-space:pre-wrap;overflow-wrap:anywhere;text-align:left}
+.codebox .ln::before{position:absolute;left:.8em;top:.28em;width:2em}
+/* większe pismo na dużych ekranach */
+@media (min-width:1400px){html{font-size:17px}}
+@media (min-width:1750px){html{font-size:19px}}
+@media (min-width:2300px){html{font-size:23px}}
+@media (min-width:1400px){
+  p,li{font-size:clamp(1rem,1.15vw,1.3rem);max-width:80ch}
+  .codebox{font-size:clamp(.9rem,1.05vw,1.2rem)}
+  .out,.console,.tbl{font-size:clamp(.9rem,.95vw,1.1rem)}
+}
+/* nagłówki skalowane także do wysokości ekranu (niskie rzutniki 720p) */
+h1{font-size:clamp(2.2rem,min(7vw,11vh),5.2rem)}
+h2{font-size:clamp(1.6rem,min(4.2vw,6.5vh),3rem)}
+@media (max-height:800px){
+  .slide{padding-top:clamp(14px,3vh,28px)}
+  h1,h2{margin-bottom:.35em}
+  p,li{line-height:1.45}
+  .row{margin:.4em 0}
+  .title-code{margin:.7em 0}
+  .codebox .ln{padding-top:.2em;padding-bottom:.2em}
+  .codebox .ln::before{top:.2em}
+}
+@media (max-height:800px){.check li{padding:.2em 0 .2em 1.8em}}
+
+</style>
+</head>
+<body>
+<main class="deck" id="deck">
+<section class="slide" data-title="Start"><div class="inner">
+  <p class="note">Programowanie obiektowe · C++ od podstaw</p>
+  <h1>Podstawowe elementy<br>języka C++</h1>
+  <div class="title-code">cout &lt;&lt; <span class="s">"Hello world!"</span> &lt;&lt; endl;<span class="cursor"></span></div>
+  <p class="lead">Rozbieramy pierwszy program na cegiełki: słowa kluczowe, nazwy, literały, operatory i separatory.</p>
+  <p class="meta">Sterowanie: strzałki ← →, spacja lub przyciski na dole.</p>
+</div></section>
+
+<section class="slide" data-title="Plan"><div class="inner">
+  <h2>Co nas czeka</h2>
+  <p class="lead">Kliknij temat, aby do niego przejść.</p>
+  <ul class="agenda">
+   <li><button data-go="2"><span class="t">Hello</span>Z czego zbudowany jest pierwszy program</button></li>
+   <li><button data-go="3"><span class="t">gra</span>Do której grupy należy element?</button></li>
+   <li><button data-go="4"><span class="t">nazwy</span>Identyfikatory: dobra czy zła nazwa</button></li>
+   <li><button data-go="5"><span class="t">7 / 2</span>Literały i operatory: przewidź wynik</button></li>
+   <li><button data-go="6"><span class="t">błędy</span>Znajdź 4 błędy w programie</button></li>
+   <li><button data-go="7"><span class="t">krok</span>Wykonaj program krok po kroku</button></li>
+   <li><button data-go="8"><span class="t">?</span>Quiz</button></li>
+  </ul>
+</div></section>
+
+<section class="slide" data-title="Cegiełki"><div class="inner">
+  <h2>Z czego zbudowany jest Hello world?</h2>
+  <p class="lead">Kliknij kolejne kawałki kodu i odkryj wszystkie <mark>6 grup</mark> elementów.</p>
+  <div class="two">
+   <div>
+    <div class="codebox" id="hw">
+     <div class="ln" data-n="1"><button class="part" data-ex="dyr"><span class="p">#include</span></button> <button class="part" data-ex="lib"><span class="s">&lt;iostream&gt;</span></button></div>
+     <div class="ln" data-n="2"><button class="part" data-ex="kwUsing"><span class="k">using</span></button> <button class="part" data-ex="kwNs"><span class="k">namespace</span></button> <button class="part" data-ex="idStd">std</button><button class="part" data-ex="sepSemi">;</button></div>
+     <div class="ln" data-n="3"><button class="part" data-ex="kwInt"><span class="k">int</span></button> <button class="part" data-ex="idMain">main</button><button class="part" data-ex="sepPar">()</button></div>
+     <div class="ln" data-n="4"><button class="part" data-ex="sepBr">{</button></div>
+     <div class="ln" data-n="5">    <button class="part" data-ex="idCout">cout</button> <button class="part" data-ex="op">&lt;&lt;</button> <button class="part" data-ex="litStr"><span class="s">"Hello world!"</span></button> <button class="part" data-ex="op">&lt;&lt;</button> <button class="part" data-ex="idEndl">endl</button><button class="part" data-ex="sepSemi">;</button></div>
+     <div class="ln" data-n="6">    <button class="part" data-ex="kwRet"><span class="k">return</span></button> <button class="part" data-ex="lit0"><span class="n">0</span></button><button class="part" data-ex="sepSemi">;</button></div>
+     <div class="ln" data-n="7"><button class="part" data-ex="sepBr">}</button></div>
+    </div>
+    <p id="hwGroups" style="margin-top:1em"></p>
+   </div>
+   <div class="explain" id="hwEx"><p class="note">← kliknij fragment kodu</p></div>
+  </div>
+</div></section>
+
+<section class="slide" data-title="Do której grupy?"><div class="inner">
+  <h2>Do której grupy należy?</h2>
+  <p class="lead">Pojawia się element kodu, a Ty wybierasz jego grupę.</p>
+  <div class="two">
+   <div>
+    <p class="meta" id="klNr"></p>
+    <div class="big-num" id="klTok" style="font-family:var(--mono, monospace)"></div>
+    <div class="row" id="klBtns" style="margin-top:.8em">
+     <button class="btn" data-g="kw">słowo kluczowe</button>
+     <button class="btn" data-g="id">identyfikator</button>
+     <button class="btn" data-g="lit">literał</button>
+     <button class="btn" data-g="op">operator</button>
+     <button class="btn" data-g="sep">separator</button>
+    </div>
+   </div>
+   <div>
+    <div class="explain" id="klOut"><p class="note">Wybierz grupę po lewej.</p></div>
+    <p class="big-num" id="klWynik"></p>
+    <div class="row"><button class="btn primary" id="klNext">Następny element</button><button class="btn" id="klReset">Od nowa</button></div>
+   </div>
+  </div>
+</div></section>
+
+<section class="slide" data-title="Nazwy"><div class="inner">
+  <h2>Identyfikator: dobra czy zła nazwa?</h2>
+  <div class="two">
+   <div>
+    <p>Oceń każdą nazwę, potem kliknij <b>Sprawdź</b>.</p>
+    <table class="tbl" id="nzTbl" style="width:100%"></table>
+    <div class="row" style="margin-top:.8em"><button class="btn primary" id="nzCheck">Sprawdź</button><button class="btn" id="nzReset">Od nowa</button></div>
+    <p class="meta" id="nzWynik"></p>
+   </div>
+   <div>
+    <h3 style="margin-top:0">Tester nazw</h3>
+    <div class="row"><label class="inl">nazwa: <input type="text" id="nzIn" value="liczba_kotow" spellcheck="false" autocomplete="off"></label></div>
+    <table class="tbl" id="nzRules" style="width:100%;margin-top:.6em"></table>
+    <p id="nzVerdict"></p>
+    <p class="note">C++ rozróżnia wielkość liter: Wynik ≠ wynik</p>
+   </div>
+  </div>
+</div></section>
+
+<section class="slide" data-title="Przewidź wynik"><div class="inner">
+  <h2>Literały i operatory: co pojawi się na ekranie?</h2>
+  <p class="lead">Wpisz, co wypisze każda linia, i kliknij <b>Sprawdź</b>.</p>
+  <div class="two">
+   <div>
+    <table class="tbl" id="pwTbl" style="width:100%"></table>
+    <div class="row" style="margin-top:.8em"><button class="btn primary" id="pwCheck">Sprawdź</button><button class="btn" id="pwReset">Od nowa</button></div>
+   </div>
+   <div class="explain" id="pwEx"><p class="note">Napis w cudzysłowie wypisuje się dosłownie, bez cudzysłowu.</p></div>
+  </div>
+</div></section>
+
+<section class="slide" data-title="Znajdź błędy"><div class="inner">
+  <h2>Znajdź 4 błędy</h2>
+  <p class="lead">Kliknij linie z błędami, a potem <b>Sprawdź</b>.</p>
+  <div class="two">
+   <div>
+    <div class="codebox" id="bl">
+     <button class="ln" data-n="1"><span class="p">#include</span> <span class="s">&lt;iostream&gt;</span></button>
+     <button class="ln" data-n="2"><span class="k">using namespace</span> std;</button>
+     <button class="ln" data-n="3"><span class="k">int</span> main()</button>
+     <button class="ln" data-n="4">{</button>
+     <button class="ln" data-n="5">    cout &lt;&lt; <span class="s">"Kot Filemon"</span> &lt;&lt; endl;</button>
+     <button class="ln" data-n="6">    cout &lt;&lt; <span class="s">'Ma 3 lata'</span> &lt;&lt; endl;</button>
+     <button class="ln" data-n="7">    cout &lt;&lt; <span class="s">"Waga: "</span> &lt;&lt; <span class="n">4,2</span> &lt;&lt; <span class="s">" kg"</span> &lt;&lt; endl;</button>
+     <button class="ln" data-n="8">    Cout &lt;&lt; <span class="s">"Lubi mleko"</span> &lt;&lt; endl;</button>
+     <button class="ln" data-n="9">    cout &lt;&lt; <span class="s">"Koniec"</span> &lt;&lt; endl</button>
+     <button class="ln" data-n="10">    <span class="k">return</span> <span class="n">0</span>;</button>
+     <button class="ln" data-n="11">}</button>
+    </div>
+    <div class="row" style="margin-top:.8em"><button class="btn primary" id="blCheck">Sprawdź</button><button class="btn" id="blShow">Pokaż rozwiązanie</button><button class="btn" id="blReset">Od nowa</button></div>
+   </div>
+   <div class="explain" id="blEx"></div>
+  </div>
+</div></section>
+
+<section class="slide" data-title="Krok po kroku"><div class="inner">
+  <h2>Wykonaj program krok po kroku</h2>
+  <div class="two">
+   <div>
+    <div class="codebox" id="st">
+     <div class="ln" data-n="1"><span class="p">#include</span> <span class="s">&lt;iostream&gt;</span></div>
+     <div class="ln" data-n="2"><span class="k">using namespace</span> std;</div>
+     <div class="ln" data-n="3"><span class="k">int</span> main()</div>
+     <div class="ln" data-n="4">{</div>
+     <div class="ln" data-n="5">    cout &lt;&lt; <span class="s">"Sklep Pod Lipa"</span> &lt;&lt; endl;</div>
+     <div class="ln" data-n="6">    cout &lt;&lt; <span class="s">"Bulki: "</span> &lt;&lt; <span class="n">10</span> &lt;&lt; endl;</div>
+     <div class="ln" data-n="7">    cout &lt;&lt; <span class="s">"Paczki po 4: "</span> &lt;&lt; <span class="n">10</span> / <span class="n">4</span> &lt;&lt; endl;</div>
+     <div class="ln" data-n="8">    cout &lt;&lt; <span class="s">"Zostaje: "</span> &lt;&lt; <span class="n">10</span> % <span class="n">4</span> &lt;&lt; endl;</div>
+     <div class="ln" data-n="9">    cout &lt;&lt; <span class="s">"Cena paczki: "</span> &lt;&lt; <span class="n">2.5</span> * <span class="n">4</span> &lt;&lt; <span class="s">" zl"</span> &lt;&lt; endl;</div>
+     <div class="ln" data-n="10">    <span class="k">return</span> <span class="n">0</span>;</div>
+     <div class="ln" data-n="11">}</div>
+    </div>
+    <div class="row" style="margin-top:.8em"><button class="btn primary" id="stNext">Następny krok</button><button class="btn" id="stReset">Od nowa</button><span class="meta" id="stScore"></span></div>
+   </div>
+   <div>
+    <p id="stOpis"></p>
+    <div class="row" id="stOpt"></div>
+    <p id="stFb"></p>
+    <div class="console"><div class="bar"><i></i><i></i><i></i></div><span id="stOut"></span></div>
+   </div>
+  </div>
+</div></section>
+
+<section class="slide" data-title="Quiz"><div class="inner quiz" id="quiz"></div></section>
+
+<section class="slide" data-title="Podsumowanie"><div class="inner">
+  <h2>Do zapamiętania</h2>
+  <ul class="check">
+   <li><code>#include</code> to dyrektywa preprocesora, która działa jeszcze przed kompilacją.</li>
+   <li>Słowa kluczowe (<code>int</code>, <code>return</code>, <code>using</code>…) są zarezerwowane i pisze się je małymi literami.</li>
+   <li>Identyfikator to nazwa. <code>main</code>, <code>cout</code> i <code>endl</code> są nazwami, a nie słowami kluczowymi.</li>
+   <li>Nazwa składa się z liter a–z, A–Z, cyfr i <code>_</code>, nie zaczyna się od cyfry i nie ma spacji.</li>
+   <li>Literały: <code>42</code>, <code>3.5</code> (z kropką!), <code>'A'</code>, <code>"tekst"</code>, <code>true</code>/<code>false</code>.</li>
+   <li><code>7 / 2</code> daje <code>3</code>, a <code>7.0 / 2</code> daje <code>3.5</code>. <code>%</code> to reszta z dzielenia.</li>
+   <li>Separatory <code>;</code> <code>{ }</code> <code>( )</code> kończą i grupują kod.</li>
+   <li>Białe znaki poza napisami nie mają znaczenia, a C++ rozróżnia wielkość liter.</li>
+  </ul>
+  <p class="links">Dokumentacja: <a href="https://en.cppreference.com/w/cpp/keyword" target="_blank" rel="noopener">słowa kluczowe</a> · <a href="https://en.cppreference.com/w/cpp/language/identifiers" target="_blank" rel="noopener">identyfikatory</a> · <a href="https://en.cppreference.com/w/cpp/language/expressions#Literals" target="_blank" rel="noopener">literały</a> · <a href="https://www.w3schools.com/cpp/cpp_syntax.asp" target="_blank" rel="noopener">w3schools: składnia</a></p>
+  <p class="note">Dalej: zmienne i typy danych, czyli nazwy, które przechowują wartości</p>
+</div></section>
+
+</main>
+<nav class="ctl" aria-label="Nawigacja prezentacji">
+ <button class="navbtn" id="prev" aria-label="Poprzedni slajd">‹</button>
+ <div class="dots" id="dots"></div>
+ <span class="count" id="count"></span>
+ <button class="navbtn" id="next" aria-label="Następny slajd">›</button>
+ <button class="theme" id="theme" aria-label="Zmień motyw jasny/ciemny">◐</button>
+</nav>
+
+<script>
+(function(){
+const KEY='po-elementy-jezyka-cpp';
+const $=id=>document.getElementById(id);
+const esc=t=>String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const slides=[...document.querySelectorAll('.slide')];
+const dots=$('dots'),count=$('count');
+let cur=0;
+slides.forEach((s,i)=>{const b=document.createElement('button');b.setAttribute('aria-label',(i+1)+'. '+s.dataset.title);b.title=s.dataset.title;b.onclick=()=>go(i);dots.appendChild(b)});
+function go(i){
+  i=Math.max(0,Math.min(slides.length-1,i));cur=i;
+  slides.forEach((s,k)=>{s.classList.toggle('active',k===i);s.classList.toggle('before',k<i);s.setAttribute('aria-hidden',k!==i)});
+  [...dots.children].forEach((d,k)=>{d.className=k===i?'cur':(k<i?'done':'')});
+  count.textContent=(i+1)+' / '+slides.length;
+  try{history.replaceState(null,'','#'+(i+1))}catch(e){}
+  try{localStorage.setItem(KEY+'-slide',i)}catch(e){}
+}
+$('prev').onclick=()=>go(cur-1);$('next').onclick=()=>go(cur+1);
+document.addEventListener('keydown',e=>{
+  if(e.target.matches('input,select'))return;
+  if(e.key==='ArrowRight'||e.key==='PageDown'||(e.key===' '&&!e.target.matches('button'))){e.preventDefault();go(cur+1)}
+  if(e.key==='ArrowLeft'||e.key==='PageUp'){e.preventDefault();go(cur-1)}
+  if(e.key==='Home')go(0);if(e.key==='End')go(slides.length-1);
+});
+let tx=null;
+document.addEventListener('touchstart',e=>{tx=e.touches[0].clientX},{passive:true});
+document.addEventListener('touchend',e=>{if(tx===null)return;const dx=e.changedTouches[0].clientX-tx;if(Math.abs(dx)>70&&!e.target.closest('.codebox,.console,.out,input,.bars'))go(cur+(dx<0?1:-1));tx=null},{passive:true});
+document.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>go(+b.dataset.go));
+const root=document.documentElement;
+$('theme').onclick=()=>{const dark=root.dataset.theme?root.dataset.theme==='dark':matchMedia('(prefers-color-scheme: dark)').matches;root.dataset.theme=dark?'light':'dark';try{localStorage.setItem('cppkurs-theme',root.dataset.theme)}catch(e){}};
+try{const t=localStorage.getItem('cppkurs-theme');if(t)root.dataset.theme=t}catch(e){}
+
+function bindExplain(boxId,outId,map){
+  const box=$(boxId),out=$(outId);
+  box.querySelectorAll('[data-ex]').forEach(b=>b.onclick=()=>{
+    box.querySelectorAll('[data-ex]').forEach(x=>x.classList.remove('on'));
+    box.querySelectorAll('[data-ex="'+b.dataset.ex+'"]').forEach(x=>x.classList.add('on'));
+    const e=map[b.dataset.ex];out.innerHTML='<h3>'+e[0]+'</h3><p>'+e[1]+'</p>';
+  });
+}
+function hlLines(boxId,set){$(boxId).querySelectorAll('.ln').forEach(l=>l.classList.toggle('on',set.includes(+l.dataset.n)))}
+function makeQuiz(el,Q){
+  let qi=0,score=0;
+  function show(){
+    if(qi>=Q.length){
+      el.innerHTML='<h2>Wynik: '+score+' / '+Q.length+'</h2><p class="lead">'+(score===Q.length?'Komplet! Możesz śmiało ruszać do kolejnego odcinka.':score>=Q.length-2?'Bardzo dobrze. Przejrzyj jeszcze slajdy z pytań, w których był błąd.':'Warto wrócić do wcześniejszych slajdów, a potem spróbować ponownie.')+'</p><div class="row"><button class="btn primary" id="qAgain">Spróbuj ponownie</button></div>';
+      $('qAgain').onclick=()=>{qi=0;score=0;show()};return;
+    }
+    const q=Q[qi];
+    el.innerHTML='<p class="qnum">Pytanie '+(qi+1)+' z '+Q.length+'</p><h2>'+esc(q[0])+'</h2>'+(q[4]?'<div class="codebox" style="max-width:640px;margin-bottom:.5em">'+q[4].split('\n').map((l,k)=>'<div class="ln" data-n="'+(k+1)+'">'+esc(l)+'</div>').join('')+'</div>':'')+'<div class="opts"></div><p class="fb" aria-live="polite"></p><div class="row"><button class="btn primary" id="qNext" hidden>'+(qi===Q.length-1?'Pokaż wynik':'Następne pytanie')+'</button></div>';
+    const o=el.querySelector('.opts'),fb=el.querySelector('.fb'),nx=$('qNext');
+    q[1].forEach((t,i)=>{const b=document.createElement('button');b.textContent=t;
+      b.onclick=()=>{[...o.children].forEach((x,k)=>{x.disabled=true;if(k===q[2])x.classList.add('right')});
+        if(i===q[2]){score++;fb.innerHTML='<b>Dobrze!</b> '+q[3]}else{b.classList.add('wrong');fb.innerHTML='<b>Nie tym razem.</b> '+q[3]}
+        nx.hidden=false;nx.focus()};o.appendChild(b)});
+    nx.onclick=()=>{qi++;show()};
+  }
+  show();
+}
+
+const chip=(ok,t)=>'<span class="chip '+(ok?'t':'f')+'">'+t+'</span>';
+
+// Cegiełki Hello world
+const GR={dyr:'dyrektywa',kw:'słowo kluczowe',id:'identyfikator',lit:'literał',op:'operator',sep:'separator'};
+const HW={
+  dyr:['dyr','#include','Dyrektywa preprocesora. Zaczyna się od <code>#</code> i działa <b>przed</b> kompilacją: wkleja do programu bibliotekę z nawiasów ostrych.'],
+  lib:['dyr','&lt;iostream&gt;','Część dyrektywy: nazwa biblioteki <i>input/output stream</i> (wejście i wyjście). Daje nam <code>cout</code> i <code>endl</code>.'],
+  kwUsing:['kw','using','Słowo kluczowe, czyli zarezerwowane słowo języka. Razem z <code>namespace</code> znaczy: „używaj nazw z tej przestrzeni”.'],
+  kwNs:['kw','namespace','Słowo kluczowe. Przestrzeń nazw to zbiór nazw. Słowa kluczowe pisze się zawsze małymi literami.'],
+  idStd:['id','std','Identyfikator, czyli nazwa przestrzeni nazw biblioteki standardowej. Dzięki tej linii piszesz <code>cout</code> zamiast <code>std::cout</code>.'],
+  kwInt:['kw','int','Słowo kluczowe oznaczające liczbę całkowitą. Mówi, że <code>main</code> oddaje liczbę całkowitą, czyli <code>0</code> z <code>return 0</code>.'],
+  idMain:['id','main','Identyfikator, czyli nazwa funkcji głównej. To nie jest słowo kluczowe, ale nazwa musi brzmieć dokładnie <code>main</code>, bo od niej startuje program.'],
+  sepPar:['sep','( )','Separator. Nawiasy po nazwie funkcji; puste znaczą, że <code>main</code> nie dostaje danych.'],
+  sepBr:['sep','{ }','Separator. Klamry grupują instrukcje w blok, tu w ciało funkcji <code>main</code>.'],
+  sepSemi:['sep',';','Separator. Średnik kończy instrukcję, tak jak kropka kończy zdanie.'],
+  idCout:['id','cout','Identyfikator z biblioteki <code>iostream</code>: strumień wyjścia, czyli ekran konsoli. To nie jest słowo kluczowe, bo bez <code>#include</code> kompilator go nie zna.'],
+  op:['op','&lt;&lt;','Operator. Wysyła to, co stoi po prawej, do strumienia po lewej. Można go łączyć: <code>cout &lt;&lt; a &lt;&lt; b</code>.'],
+  litStr:['lit','"Hello world!"','Literał, a dokładniej napis. To wartość wpisana wprost w kod i wypisywana dosłownie, bez cudzysłowu.'],
+  idEndl:['id','endl','Identyfikator z biblioteki <code>iostream</code>, oznacza koniec linii. Dalsze wypisywanie zacznie się w nowym wierszu.'],
+  kwRet:['kw','return','Słowo kluczowe. Kończy funkcję i oddaje wynik; w <code>main</code> wynik 0 znaczy „wszystko poszło dobrze”.'],
+  lit0:['lit','0','Literał: liczba całkowita wpisana wprost w kod. Po zakończeniu programu IDE pokaże ją jako <i>Process returned 0</i>.']
+};
+const hwMap={};
+Object.keys(HW).forEach(k=>{const h=HW[k];hwMap[k]=[h[1]+' — '+GR[h[0]],'<p>'+h[2]+'</p>'];});
+bindExplain('hw','hwEx',hwMap);
+const hwFound=new Set();
+function hwDraw(){
+  $('hwGroups').innerHTML='Odkryte grupy: <b>'+hwFound.size+' / 6</b> '+Object.keys(GR).map(g=>hwFound.has(g)?chip(true,GR[g]):'<span class="chip">?</span>').join(' ')+(hwFound.size===6?' <b>Komplet!</b>':'');
+}
+document.querySelectorAll('#hw .part').forEach(b=>b.addEventListener('click',()=>{hwFound.add(HW[b.dataset.ex][0]);hwDraw();}));
+hwDraw();
+
+// Do której grupy?
+const KL=[
+  ['return','kw','Zarezerwowane słowo języka, które kończy funkcję.'],
+  ['cout','id','Nazwa z biblioteki iostream, a nie słowo kluczowe.'],
+  ['"Kot Filemon"','lit','Napis, czyli tekst w cudzysłowie.'],
+  ['<<','op','Operator wysyłania danych do strumienia.'],
+  [';','sep','Średnik kończy instrukcję.'],
+  ['42','lit','Liczba całkowita wpisana wprost w kod.'],
+  ['int','kw','Słowo kluczowe oznaczające liczby całkowite.'],
+  ['main','id','Nazwa funkcji głównej.'],
+  ['{','sep','Klamra otwiera blok kodu.'],
+  ["'A'",'lit','Literał znakowy, czyli jeden znak w apostrofach.'],
+  ['%','op','Operator reszty z dzielenia.'],
+  ['liczba_kotow','id','Nazwa wymyślona przez programistę.'],
+  ['3.5','lit','Liczba rzeczywista, zapisana z kropką.'],
+  ['using','kw','Słowo kluczowe z linii using namespace std;.'],
+  ['*','op','Operator mnożenia.'],
+  ['endl','id','Nazwa z biblioteki iostream, oznacza koniec linii.'],
+  ['double','kw','Słowo kluczowe oznaczające liczby rzeczywiste.'],
+  ['( )','sep','Nawiasy grupują, np. po nazwie funkcji.']
+];
+let klI=0,klOk=0,klDone=0,klAns=false;
+function klDraw(){
+  const end=klI>=KL.length;
+  $('klNr').textContent=end?'Koniec gry':'Element '+(klI+1)+' z '+KL.length;
+  $('klTok').textContent=end?'🏁':KL[klI][0];
+  $('klWynik').textContent='Wynik: '+klOk+' / '+klDone;
+  $('klNext').textContent=klI>=KL.length-1?'Zakończ':'Następny element';
+  document.querySelectorAll('#klBtns button').forEach(b=>b.setAttribute('aria-pressed','false'));
+}
+document.querySelectorAll('#klBtns button').forEach(b=>b.onclick=()=>{
+  if(klI>=KL.length){$('klOut').innerHTML='<p>Gra skończona. Kliknij <b>Od nowa</b>, żeby zagrać jeszcze raz.</p>';return;}
+  if(klAns){$('klOut').innerHTML+='<p class="meta">Odpowiedź jest już zapisana. Kliknij „Następny element”.</p>';return;}
+  const t=KL[klI],ok=b.dataset.g===t[1];
+  klAns=true;klDone++;if(ok)klOk++;
+  b.setAttribute('aria-pressed','true');
+  $('klOut').innerHTML='<h3>'+chip(ok,ok?'✓ dobrze':'✗ nie')+' <code>'+esc(t[0])+'</code> to '+GR[t[1]]+'</h3><p>'+t[2]+'</p>';
+  $('klWynik').textContent='Wynik: '+klOk+' / '+klDone;
+});
+$('klNext').onclick=()=>{
+  if(klI>=KL.length)return;
+  klI++;klAns=false;
+  $('klOut').innerHTML=klI>=KL.length?'<h3>Twój wynik: '+klOk+' / '+KL.length+'</h3><p>'+(klOk>=15?'Świetnie, rozpoznajesz elementy języka!':'Wróć do slajdu z Hello world i kliknij elementy, które sprawiły kłopot.')+'</p>':'<p class="note">Wybierz grupę po lewej.</p>';
+  klDraw();
+};
+$('klReset').onclick=()=>{klI=0;klOk=0;klDone=0;klAns=false;$('klOut').innerHTML='<p class="note">Wybierz grupę po lewej.</p>';klDraw();};
+klDraw();
+
+// Identyfikatory
+const KW=new Set(('alignas alignof and and_eq asm auto bitand bitor bool break case catch char char8_t char16_t char32_t class compl concept const consteval constexpr constinit const_cast continue co_await co_return co_yield decltype default delete do double dynamic_cast else enum explicit export extern false float for friend goto if inline int long mutable namespace new noexcept not not_eq nullptr operator or or_eq private protected public register reinterpret_cast requires return short signed sizeof static static_assert static_cast struct switch template this thread_local throw true try typedef typeid typename union unsigned using virtual void volatile wchar_t while xor xor_eq').split(' '));
+function ocen(s){
+  const zle=[...new Set(s.replace(/[A-Za-z0-9_]/g,'').split(''))];
+  const opis=zle.map(c=>/\s/.test(c)?'spacja':/[ąćęłńóśźżĄĆĘŁŃÓŚŹŻ]/.test(c)?'polska litera '+c:c).join(', ');
+  const rules=[
+    ['nie jest pusta',s.length>0,''],
+    ['tylko litery a–z, A–Z, cyfry i _',zle.length===0,zle.length?'niedozwolone: '+opis:''],
+    ['nie zaczyna się od cyfry',!/^[0-9]/.test(s),''],
+    ['nie jest słowem kluczowym',!KW.has(s),KW.has(s)?'to słowo kluczowe':'']
+  ];
+  const ok=rules.every(r=>r[1]);
+  let pow='';
+  if(!ok)pow=rules.filter(r=>!r[1]).map(r=>r[2]||r[0]).join('; ');
+  else if(['main','cout','endl','std','cin'].includes(s))pow='poprawna, ale myląca, bo to nazwa z programu albo biblioteki';
+  else if(KW.has(s.toLowerCase()))pow='poprawna, bo C++ rozróżnia wielkość liter, ale łatwo ją pomylić ze słowem kluczowym';
+  return {ok,rules,pow};
+}
+function nzTest(){
+  const s=$('nzIn').value,r=ocen(s);
+  $('nzRules').innerHTML='<tr><th>zasada</th><th>wynik</th></tr>'+r.rules.map(x=>'<tr><td style="font-family:var(--sans, sans-serif)">'+x[0]+(x[2]&&!x[1]?' <span class="meta">('+esc(x[2])+')</span>':'')+'</td><td>'+chip(x[1],x[1]?'✓':'✗')+'</td></tr>').join('');
+  $('nzVerdict').innerHTML=s.length?(r.ok?chip(true,'poprawna nazwa'):chip(false,'błędna nazwa'))+(r.ok&&r.pow?' <span class="meta">'+r.pow+'</span>':''):'<span class="meta">Wpisz nazwę.</span>';
+}
+$('nzIn').oninput=nzTest;nzTest();
+
+const NZ=['liczba_kotow','2klasa','suma punktow','cena-brutto','double','Return','wynik2'];
+const nzWyb={};
+function nzDraw(){
+  $('nzTbl').innerHTML='<tr><th>nazwa</th><th>Twoja ocena</th><th></th></tr>'+NZ.map((n,i)=>'<tr><td><code>'+esc(n)+'</code></td><td><div class="seg"><button data-i="'+i+'" data-v="1" aria-pressed="'+(nzWyb[i]===true)+'">dobra</button><button data-i="'+i+'" data-v="0" aria-pressed="'+(nzWyb[i]===false)+'">zła</button></div></td><td id="nzR'+i+'"></td></tr>').join('');
+  $('nzTbl').querySelectorAll('button').forEach(b=>b.onclick=()=>{nzWyb[+b.dataset.i]=b.dataset.v==='1';nzDraw();});
+}
+$('nzCheck').onclick=()=>{
+  let ok=0,ile=0;
+  NZ.forEach((n,i)=>{
+    const r=ocen(n),c=$('nzR'+i);
+    if(!(i in nzWyb)){c.innerHTML='<span class="meta">nie oceniono</span>';return;}
+    ile++;const traf=nzWyb[i]===r.ok;if(traf)ok++;
+    c.innerHTML=chip(traf,traf?'✓':'✗')+' <span class="meta">'+(r.ok?(r.pow||'poprawna'):r.pow)+'</span>';
+  });
+  $('nzWynik').innerHTML='Trafione: <b>'+ok+' / '+NZ.length+'</b>'+(ile<NZ.length?' (oceń wszystkie nazwy)':ok===NZ.length?' Bezbłędnie!':'');
+};
+$('nzReset').onclick=()=>{Object.keys(nzWyb).forEach(k=>delete nzWyb[k]);$('nzWynik').textContent='';nzDraw();};
+nzDraw();
+
+// Przewidź wynik
+const PW=[
+  ['cout << 7 + 3;','10','Bez cudzysłowu to działanie: 7 + 3 = 10.'],
+  ['cout << "7 + 3";','7 + 3','W cudzysłowie to napis, więc wypisuje się dosłownie, bez cudzysłowu.'],
+  ['cout << 7 / 2;','3','Obie liczby są całkowite, więc dzielenie też jest całkowite i część ułamkowa znika.'],
+  ['cout << 7.0 / 2;','3.5','7.0 ma kropkę, więc wynik jest liczbą rzeczywistą.'],
+  ['cout << 7 % 2;','1','% to reszta z dzielenia: 7 = 3·2 + 1.'],
+  ["cout << 'B';",'B','Literał znakowy: na ekranie pojawia się sam znak, bez apostrofów.'],
+  ['cout << true;','1','Wartość logiczna true wypisuje się jako 1.']
+];
+const bezSpacji=s=>s.replace(/\s+/g,'');
+function pwDraw(){
+  $('pwTbl').innerHTML='<tr><th>kod</th><th>na ekranie</th><th></th></tr>'+PW.map((p,i)=>'<tr><td><code>'+esc(p[0])+'</code></td><td><input type="text" id="pw'+i+'" style="width:7em" spellcheck="false" autocomplete="off"></td><td id="pwR'+i+'"></td></tr>').join('');
+  PW.forEach((p,i)=>$('pw'+i).oninput=()=>{$('pwR'+i).innerHTML='';});
+}
+$('pwCheck').onclick=()=>{
+  let ok=0;const uw=[];
+  PW.forEach((p,i)=>{
+    const v=$('pw'+i).value.trim(),traf=v!==''&&bezSpacji(v)===bezSpacji(p[1]);
+    if(traf)ok++;
+    $('pwR'+i).innerHTML=v===''?'<span class="meta">?</span>':chip(traf,traf?'✓':'✗');
+    let tip='';
+    if(!traf&&/["']/.test(v))tip=' Cudzysłów ani apostrofy nie pojawiają się na ekranie.';
+    else if(!traf&&v.includes(','))tip=' cout wypisuje kropkę, nie przecinek.';
+    uw.push('<li><code>'+esc(p[0])+'</code> → <b>'+esc(p[1])+'</b>. '+p[2]+tip+'</li>');
+  });
+  $('pwEx').innerHTML='<h3>Trafione: '+ok+' / '+PW.length+'</h3><ul>'+uw.join('')+'</ul>';
+};
+$('pwReset').onclick=()=>{pwDraw();$('pwEx').innerHTML='<p class="note">Napis w cudzysłowie wypisuje się dosłownie, bez cudzysłowu.</p>';};
+pwDraw();
+
+// Znajdź błędy
+const BL={
+  6:"<code>'Ma 3 lata'</code>: w apostrofach mieści się jeden znak, więc program wypisze dziwną liczbę. Tekst ujmij w cudzysłów: <code>\"Ma 3 lata\"</code>.",
+  7:'<code>4,2</code>: przecinek zamiast kropki. Liczbę rzeczywistą zapisuje się tak: <code>4.2</code>.',
+  8:'<code>Cout</code>: wielka litera. Nazwa z biblioteki to <code>cout</code>, a C++ rozróżnia wielkość liter.',
+  9:'Brak średnika po <code>endl</code>. Kompilator zgłosi <i>expected \';\' before \'return\'</i>: komunikat wspomina o <code>return</code> z linii 10, ale brakuje średnika na końcu linii 9.'
+};
+const blSel=new Set();
+const blLines=()=>document.querySelectorAll('#bl .ln');
+function blPaint(n,kolor){const b=document.querySelector('#bl .ln[data-n="'+n+'"]');if(b)b.style.boxShadow=kolor?'inset 6px 0 0 '+kolor:'';}
+function blDraw(){
+  blLines().forEach(b=>blPaint(b.dataset.n,''));
+  hlLines('bl',[...blSel]);
+  $('blEx').innerHTML='<p class="note">Zaznaczone linie: '+blSel.size+' (szukasz 4 błędów)</p>';
+}
+blLines().forEach(b=>b.addEventListener('click',()=>{const n=+b.dataset.n;if(blSel.has(n))blSel.delete(n);else blSel.add(n);blDraw();}));
+function blOcen(pokaz){
+  blDraw();
+  let traf=0;const li=[];
+  blLines().forEach(b=>{
+    const n=+b.dataset.n,blad=n in BL,zazn=blSel.has(n);
+    if(blad&&zazn){traf++;blPaint(n,'#2e7d32');li.push('<li>'+chip(true,'linia '+n)+' '+BL[n]+'</li>');}
+    else if(blad&&pokaz){blPaint(n,'#ef6c00');li.push('<li>'+chip(false,'linia '+n)+' '+BL[n]+'</li>');}
+    else if(!blad&&zazn){blPaint(n,'#c62828');li.push('<li>'+chip(false,'linia '+n)+' Ta linia jest poprawna.</li>');}
+  });
+  const brak=4-traf;
+  $('blEx').innerHTML='<h3>Znalezione: '+traf+' / 4</h3>'+(li.length?'<ul>'+li.join('')+'</ul>':'')+(pokaz?'':brak?'<p class="note">Szukaj dalej: brakuje '+brak+(brak===1?' błędu':' błędów')+'.</p>':'<p class="note">Wszystkie znalezione!</p>');
+}
+$('blCheck').onclick=()=>blOcen(false);
+$('blShow').onclick=()=>blOcen(true);
+$('blReset').onclick=()=>{blSel.clear();blDraw();};
+blDraw();
+
+// Krok po kroku
+const ST=[
+  {l:[1],o:'Preprocesor dołącza bibliotekę <code>iostream</code>. Od teraz znane są nazwy <code>cout</code> i <code>endl</code>.'},
+  {l:[2],o:'Dzięki <code>using namespace std;</code> możemy pisać <code>cout</code> zamiast <code>std::cout</code>.'},
+  {l:[3,4],o:'Program zaczyna działanie od funkcji <code>main</code>. Klamra otwiera jej blok.'},
+  {l:[5],q:['Sklep Pod Lipa','"Sklep Pod Lipa"','Sklep Pod Lipa endl'],p:0,w:'Sklep Pod Lipa',e:'Cudzysłów nie jest wypisywany, a endl to przejście do nowej linii, nie tekst.'},
+  {l:[6],q:['Bulki:10','Bulki: 10','Bulki: " << 10'],p:1,w:'Bulki: 10',e:'Spacja stoi wewnątrz napisu "Bulki: ", więc pojawi się przed liczbą 10.'},
+  {l:[7],q:['Paczki po 4: 2.5','Paczki po 4: 3','Paczki po 4: 2'],p:2,w:'Paczki po 4: 2',e:'10 / 4 to dzielenie całkowite, czyli 2 pełne paczki.'},
+  {l:[8],q:['Zostaje: 2','Zostaje: 0.5','Zostaje: 2.5'],p:0,w:'Zostaje: 2',e:'10 % 4 to reszta z dzielenia: 10 = 2·4 + 2.'},
+  {l:[9],q:['Cena paczki: 10.0 zl','Cena paczki: 10 zl','Cena paczki: 2.5 * 4 zl'],p:1,w:'Cena paczki: 10 zl',e:'2.5 * 4 daje 10.0, ale cout nie dopisuje zbędnego „.0”.'},
+  {l:[10,11],o:'<code>return 0;</code> kończy program, a IDE dopisuje informację o zakończeniu.'}
+];
+const ST_PYT=ST.filter(s=>s.q).length;
+let stK=-1,stAns=false,stOk=0;const stOut=[];
+function stConsole(){
+  $('stOut').innerHTML=stOut.map(esc).join('<br>')+(stK===ST.length-1?(stOut.length?'<br>':'')+'<br>Process returned 0 (0x0)':'');
+}
+function stDraw(){
+  const s=stK>=0?ST[stK]:null;
+  hlLines('st',s?s.l:[]);
+  if(!s){$('stOpis').innerHTML='Kliknij <b>Następny krok</b>, żeby wykonać program. Przy liniach z <code>cout</code> zgadnij, co pojawi się w konsoli.';$('stOpt').innerHTML='';}
+  else if(s.q){
+    $('stOpis').innerHTML='<b>Linia '+s.l[0]+':</b> co pojawi się w konsoli?';
+    $('stOpt').innerHTML=s.q.map((t,i)=>'<button class="btn" data-i="'+i+'">'+esc(t)+'</button>').join('');
+    $('stOpt').querySelectorAll('button').forEach(b=>b.onclick=()=>stPick(+b.dataset.i));
+  } else {$('stOpis').innerHTML=s.o;$('stOpt').innerHTML='';}
+  $('stNext').disabled=stK>=ST.length-1;
+  $('stScore').textContent='Trafione: '+stOk+' / '+ST_PYT;
+  stConsole();
+}
+function stPick(i){
+  const s=ST[stK];
+  if(!s||!s.q)return;
+  if(stAns){$('stFb').innerHTML+=' <span class="meta">Kliknij „Następny krok”.</span>';return;}
+  stAns=true;const ok=i===s.p;if(ok)stOk++;
+  stOut.push(s.w);
+  $('stOpt').querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(+b.dataset.i===s.p)));
+  $('stFb').innerHTML=chip(ok,ok?'✓ dobrze':'✗ nie')+' '+(ok?'':'Poprawnie: <code>'+esc(s.w)+'</code>. ')+esc(s.e);
+  $('stScore').textContent='Trafione: '+stOk+' / '+ST_PYT;
+  stConsole();
+}
+$('stNext').onclick=()=>{
+  const s=stK>=0?ST[stK]:null;
+  if(s&&s.q&&!stAns){stOut.push(s.w);}
+  if(stK<ST.length-1){stK++;stAns=false;$('stFb').innerHTML='';}
+  stDraw();
+};
+$('stReset').onclick=()=>{stK=-1;stAns=false;stOk=0;stOut.length=0;$('stFb').innerHTML='';stDraw();};
+stDraw();
+
+makeQuiz($('quiz'),[
+  ['Które słowo jest słowem kluczowym C++?',['main','cout','return','endl'],2,'return to słowo zarezerwowane przez język. main, cout i endl to identyfikatory, czyli nazwy.'],
+  ['Która nazwa jest poprawnym identyfikatorem?',['liczba_kotow','suma punktow','1miejsce','int'],0,'Podkreślnik jest dozwolony. Spacja, cyfra na początku i słowo kluczowe nie są dozwolone.'],
+  ['Jak w C++ zapisać liczbę trzy i pół?',['3,5','3 1/2',"'3.5'",'3.5'],3,'W C++ część ułamkową oddziela się kropką.'],
+  ['Który zapis to literał znakowy?',['"A"','A',"'A'",'<A>'],2,'Pojedynczy znak zapisuje się w apostrofach. "A" to napis, a samo A kompilator weźmie za nazwę.'],
+  ['Co wypisze ten kod?',['5 + 4','54','9','"5 + 4"'],2,'5 + 4 bez cudzysłowu to działanie, więc cout wypisze jego wynik.','cout << 5 + 4;'],
+  ['Co wypisze ten kod?',['4.5','4,5','5','4'],3,'Obie liczby są całkowite, więc dzielenie jest całkowite i część ułamkowa znika.','cout << 9 / 2;'],
+  ['Do jakiej grupy należy średnik na końcu instrukcji?',['operator','separator','literał','identyfikator'],1,'Średnik oddziela instrukcje od siebie, a klamry i nawiasy grupują kod.'],
+  ['Dlaczego ta linia się nie skompiluje?',['Brakuje średnika','main pisze się wielką literą','C++ rozróżnia wielkość liter','Int to literał'],2,'Słowem kluczowym jest int, pisane małymi literami. Int kompilator traktuje jak nieznaną nazwę.','Int main()']
+]);
+
+let start=0;const h=parseInt(location.hash.slice(1));
+if(h>0)start=h-1;else{try{const s=localStorage.getItem(KEY+'-slide');if(s)start=+s}catch(e){}}
+go(start);
+
+})();
+</script>
+<!-- materialy.py: poprawki nawigacji prezentacji (ankieta uczniów 10.2026), wklejane przed </body> po build.py skilla -->
+<style>
+.dots button,.dots button.done,.dots button.cur{height:28px;padding:10px 0;background-clip:content-box}
+.dots button.cur{padding:8px 0}
+.navbtn{width:52px;height:52px;font-size:1.5rem}
+textarea,input,code,pre,.codebox{font-variant-ligatures:none}
+.navhint{font-family:var(--mono);font-size:.8rem;color:var(--ink-soft);white-space:nowrap}
+.navhint[hidden]{display:none}
+@media (max-width:560px){.navhint{display:none}}
+.quiz .opts{counter-reset:opt}
+.quiz .opts button{counter-increment:opt;display:flex;align-items:baseline;gap:.6em;white-space:pre-wrap}
+.quiz h2{white-space:pre-wrap}
+.quiz .opts button::before{content:counter(opt);flex:none;display:inline-grid;place-items:center;width:1.7em;height:1.7em;border:2px solid currentColor;font-family:var(--mono);font-size:.85em;font-weight:600}
+.quiz .qnum::after{content:" · odpowiedź: klawisz 1–4, dalej: Enter";color:var(--ink-soft);font-size:.85em}
+@media (hover:none){.quiz .qnum::after{content:none}}
+</style>
+<script>
+(function () {
+  var next = document.getElementById("next"), prev = document.getElementById("prev"), nav = document.querySelector("nav.ctl");
+  if (!next || !prev || !nav) return;
+  var hint = document.createElement("span");
+  hint.className = "navhint";
+  hint.hidden = true;
+  hint.textContent = "Esc — wróć do slajdów";
+  nav.insertBefore(hint, document.getElementById("count"));
+  function field(t) { return !!t && (t.isContentEditable || (t.matches && t.matches("input,select,textarea"))); }
+  function stop(e) { e.stopPropagation(); }
+  // Klawisz w polu do pisania nie może dojść do nawigacji skilla (ona pomija tylko input/select, więc spacja
+  // w <textarea> przełączała slajd). Faza przechwytywania: Esc oddaje klawiaturę slajdom, PageDown/PageUp
+  // i Alt+strzałki przełączają z pola; resztę zatrzymuje jednorazowy słuchacz na samym polu — po obsłudze
+  // przez stronę, przed nawigacją na document.
+  document.addEventListener("keydown", function (e) {
+    var t = e.target;
+    if (!field(t)) return;
+    if (e.key === "Escape") { e.preventDefault(); t.blur(); }
+    else if (e.key === "PageDown" || (e.altKey && e.key === "ArrowRight")) { e.preventDefault(); t.blur(); next.click(); }
+    else if (e.key === "PageUp" || (e.altKey && e.key === "ArrowLeft")) { e.preventDefault(); t.blur(); prev.click(); }
+    else t.addEventListener("keydown", stop, {once: true});
+  }, true);
+  // Enter przełącza dalej, gdy fokus nie stoi na niczym klikalnym (przycisk, link, rozwijane) ani w polu.
+  document.addEventListener("keydown", function (e) {
+    var t = e.target;
+    if (e.key === "Enter" && !e.defaultPrevented && !field(t) && !(t.closest && t.closest("button,a,summary,label,[tabindex]"))) {
+      e.preventDefault(); next.click();
+    }
+  });
+  // Quiz skilla: cyfra wybiera odpowiedź na aktywnym slajdzie (Enter potem klika „Następne pytanie”, które ma fokus).
+  document.addEventListener("keydown", function (e) {
+    if (e.altKey || e.ctrlKey || e.metaKey || !/^[1-9]$/.test(e.key) || field(e.target)) return;
+    var opts = document.querySelector(".slide.active .quiz .opts");
+    var b = opts && opts.querySelectorAll("button")[+e.key - 1];
+    if (b && !b.disabled) { e.preventDefault(); b.click(); }
+  });
+  // Po wyborze z listy, pola wyboru albo suwaka (myszką) klawiatura wraca do slajdów.
+  document.addEventListener("change", function (e) {
+    if (e.target.matches("select,input[type=checkbox],input[type=radio]")) e.target.blur();
+  });
+  document.addEventListener("pointerup", function (e) {
+    if (e.target.matches && e.target.matches("input[type=range]")) setTimeout(function () { e.target.blur(); }, 0);
+  });
+  document.addEventListener("focusin", function (e) {
+    hint.hidden = !(field(e.target) && !(e.target.matches && e.target.matches("input[type=range],input[type=checkbox],input[type=radio]")));
+  });
+  document.addEventListener("focusout", function () { hint.hidden = true; });
+})();
+</script>
+</body>
+</html>
